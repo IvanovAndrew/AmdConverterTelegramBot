@@ -1,1 +1,1 @@
-# AmdToRurTelegramBotConverter
+# AmdTelegramBotConverter
