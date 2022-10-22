@@ -1,13 +1,11 @@
 
-.idea/.idea.AmdToRurTelegramBotConverter/.idea/
+.idea/*
 
-.idea/.idea.AmdConverterTelegramBot/.idea/
-
-AmdConverterTelegramBotTests/obj/
 AmdConverterTelegramBotTests/bin/
+AmdConverterTelegramBotTests/obj/
 
-AmdConverterTelegramBot/obj/
 AmdConverterTelegramBot/bin/
+AmdConverterTelegramBot/obj/
 AmdConverterTelegramBot.sln.DotSettings.user
 
-
+publish/

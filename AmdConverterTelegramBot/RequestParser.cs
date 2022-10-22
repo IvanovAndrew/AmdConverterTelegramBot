@@ -1,10 +1,11 @@
+using System;
 using AmdConverterTelegramBot.Entities;
 
 namespace AmdConverterTelegramBot;
 
 public interface IRequestParser
 {
-    bool TryParse(string text, out Money? money, out Currency? currency, out bool? toCurrency);
+    bool TryParse(string text, out Money? money, out bool? cash, out Currency? currency, out bool? toCurrency);
 }
 
 public class RequestParser : IRequestParser
@@ -20,9 +21,12 @@ public class RequestParser : IRequestParser
         _delimiters = delimiters;
     }
 
-    public bool TryParse(string s, out Money? money, out Currency? currency, out bool? toCurrency)
+    public bool TryParse(string s, out Money? money, out bool? cash, out Currency? currency, out bool? toCurrency)
     {
-        var parts = s.Split(_delimiters, StringSplitOptions.RemoveEmptyEntries);
+        var lowerCaseText = s.ToLowerInvariant();
+        cash = ParseCash(lowerCaseText);
+        
+        var parts = lowerCaseText.Replace("non cash", "").Replace("cash", "").Split(_delimiters, StringSplitOptions.RemoveEmptyEntries);
 
         money = null;
         currency = null;
@@ -55,5 +59,15 @@ public class RequestParser : IRequestParser
         }
 
         return true;
+    }
+
+    private bool? ParseCash(string s)
+    {
+        if (s.StartsWith("cash"))
+            return true;
+
+        if (s.StartsWith("non cash")) return false;
+
+        return null;
     }
 }

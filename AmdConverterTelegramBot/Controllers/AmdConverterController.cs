@@ -1,6 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using AmdConverterTelegramBot.Entities;
 using AmdConverterTelegramBot.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -16,19 +21,17 @@ public class AmdConverterController : ControllerBase
     internal const string Route = "api/message/update"; 
     private readonly ILogger _logger;
     private readonly TelegramBot _bot;
-    private readonly RateAmService _rateService;
     private readonly IRequestParser _requestParser;
     
-    private readonly IReadOnlyDictionary<string, BankInfo> _banksInfo;
+    private readonly RateAmOptions _rateAmOptions;
     private readonly Replies _replies;
 
-    public AmdConverterController(ILogger<AmdConverterController> logger, TelegramBot bot, IRequestParser requestParser, RateAmService rateService, RateAmOptions rateOptions, Replies replies)
+    public AmdConverterController(ILogger<AmdConverterController> logger, TelegramBot bot, IRequestParser requestParser, RateAmOptions rateOptions, Replies replies)
     {
         _logger = logger;
         _bot = bot;
         _requestParser = requestParser;
-        _rateService = rateService;
-        _banksInfo = rateOptions.Banks;
+        _rateAmOptions = rateOptions;
         _replies = replies;
     }
     
@@ -37,120 +40,116 @@ public class AmdConverterController : ControllerBase
     {
         var botClient = await _bot.GetBot();
 
+        long chatId = 0;
+        int messageId = 0;
+        string text = string.Empty;
         if (update.Type == UpdateType.Message)
         {
-            var message = update.Message;
-            string text = 
-                message.Text.Replace(",", ".").ToLowerInvariant().Trim();
-            _logger.LogInformation($"{text} is received");
-            if (text == "/start")
-            {
-                await botClient.SendTextMessageAsync(message.Chat.Id, "Hello! Enter the price in AMD");
-            }
-            
-            else if (_requestParser.TryParse(text, out var money, out var currency, out var toCurrency))
-            {
-                if (money != null && currency != null  && toCurrency != null)
-                {
-                    var exchangesResult = await _rateService.Convert(money, currency, toCurrency.Value);
-                    
-                    if (!exchangesResult.IsSuccess)
-                    {
-                        await botClient.SendTextMessageAsync(message.Chat.Id, $"{exchangesResult.ErrorMessage}");
-                    }
-                    else
-                    {
-                        string replyText = FormatTable(exchangesResult.Value, currency, money, toCurrency.Value);
-
-                        await botClient.SendTextMessageAsync(message.Chat.Id, $"```{replyText}```", ParseMode.MarkdownV2);
-                    }
-                }
-                else
-                {
-                    if (money != null)
-                    {
-                        string moneyAsString = $"{money.Amount}{money.Currency.Symbol}";
-                        InlineKeyboardMarkup inlineKeyboard;
-                        if (money.Currency == Currency.Amd)
-                        {
-                            var availableCurrencies = new[] { Currency.Eur, Currency.Usd, Currency.Rur };
-                            inlineKeyboard = new InlineKeyboardMarkup
-                            (
-                                new []
-                                {
-                                    availableCurrencies
-                                        .Select(c =>
-                                            InlineKeyboardButton.WithCallbackData(
-                                                text: $"{money.Currency.Name} -> {c.Name}",
-                                                callbackData: $"{moneyAsString}->{c.Name}")).ToArray(),
-                                    availableCurrencies
-                                        .Select(c =>
-                                            InlineKeyboardButton.WithCallbackData(
-                                                text: $"{c.Name} -> {money.Currency.Name}",
-                                                callbackData: $"{c.Name}->{moneyAsString}"))
-                                }
-                            );
-                        }
-                        else
-                        {
-                            inlineKeyboard = new InlineKeyboardMarkup(
-                                new []
-                                {
-                                    InlineKeyboardButton.WithCallbackData(text:$"{money.Currency.Name} -> {Currency.Amd.Name}", callbackData:$"{moneyAsString}->{Currency.Amd.Name}"), 
-                                    InlineKeyboardButton.WithCallbackData(text:$"{Currency.Amd.Name} -> {money.Currency.Name}", callbackData:$"{Currency.Amd.Name}->{moneyAsString}"), 
-                                }
-                            );
-                        }
-                        
-                        
-                        await botClient.SendTextMessageAsync(message.Chat.Id, text:"What should I do?", replyMarkup: inlineKeyboard);
-                    }
-                }
-            }
-            else if (_replies.Dialogues.Any(a => a.Message.Contains(text)))
-            {
-                var a = _replies.Dialogues.First(a => a.Message.Contains(text));
-
-                if (!string.IsNullOrEmpty(a.Reply.Text))
-                {
-                    await botClient.SendTextMessageAsync(message.Chat.Id, a.Reply.Text, replyToMessageId: message.MessageId);
-                }
-                else
-                {
-                    await botClient.SendStickerAsync(message.Chat.Id, new InputOnlineFile(a.Reply.Sticker), replyToMessageId: message.MessageId);
-                }
-            }
-            else 
-            {
-                await botClient.SendTextMessageAsync(message.Chat.Id, $"{message.Text} isn't recognized as number");
-            }
+            chatId = update.Message.Chat.Id;
+            text =
+                update.Message.Text.Replace(",", ".").ToLowerInvariant().Trim();
+            messageId = update.Message.MessageId;
         }
         else if (update.Type == UpdateType.CallbackQuery)
         {
-            string text = update.CallbackQuery.Data;
-            var message = update.CallbackQuery.Message;
-            if (_requestParser.TryParse(text, out var money, out var currency, out var toCurrency))
-            {
-                if (money != null && currency != null  && toCurrency != null)
-                {
-                    var exchangesResult = await _rateService.Convert(money, currency, toCurrency.Value);
-                    
-                    if (!exchangesResult.IsSuccess)
-                    {
-                        await botClient.SendTextMessageAsync(message.Chat.Id, $"{exchangesResult.ErrorMessage}");
-                    }
-                    else
-                    {
-                        string replyText = FormatTable(exchangesResult.Value, currency, money, toCurrency.Value);
+            text = update.CallbackQuery.Data;
+            chatId = update.CallbackQuery.Message.Chat.Id;
+            messageId = update.CallbackQuery.Message.MessageId;
+        }
 
-                        await botClient.SendTextMessageAsync(message.Chat.Id, $"```{replyText}```", ParseMode.MarkdownV2);
-                    }
+        _logger.LogInformation($"{text} is received");
+        
+        
+        if (text == "/start")
+        {
+            await botClient.SendTextMessageAsync(chatId, "Hello! Enter the price in AMD, USD, EUR, or RUB");
+        }
+            
+        else if (_requestParser.TryParse(text, out var money, out var cash, out var currency, out var toCurrency))
+        {
+            if (money != null && cash != null && currency != null && toCurrency != null)
+            {
+                var rateService = new RateAmService(cash.Value ? _rateAmOptions.CashUrl : _rateAmOptions.NonCashUrl);
+                var exchangesResult = await rateService.Convert(money, currency, toCurrency.Value);
+                
+                if (!exchangesResult.IsSuccess)
+                {
+                    await botClient.SendTextMessageAsync(chatId, $"{exchangesResult.ErrorMessage}");
                 }
                 else
                 {
-                    await botClient.SendTextMessageAsync(message.Chat.Id, "Something wrong with buttons");
+                    string replyText = FormatTable(exchangesResult.Value, currency, money, toCurrency.Value);
+                    await botClient.SendTextMessageAsync(chatId, $"{(cash.Value? "Cash" : "Non cash")}{Environment.NewLine}```{replyText}```", ParseMode.MarkdownV2);
                 }
             }
+            else if (money != null && cash != null)
+            {
+                string cashString = cash.Value ? "cash" : "non cash";
+                string moneyAsString = $"{money.Amount}{money.Currency.Symbol}";
+                InlineKeyboardMarkup inlineKeyboard;
+                if (money.Currency == Currency.Amd)
+                {
+                    var availableCurrencies = new[] { Currency.Eur, Currency.Usd, Currency.Rur };
+                    inlineKeyboard = new InlineKeyboardMarkup
+                    (
+                        new []
+                        {
+                            availableCurrencies
+                                .Select(c =>
+                                    InlineKeyboardButton.WithCallbackData(
+                                        text: $"{money.Currency.Name} -> {c.Name}",
+                                        callbackData: $"{cashString} {moneyAsString}->{c.Name}")).ToArray(),
+                            availableCurrencies
+                                .Select(c =>
+                                    InlineKeyboardButton.WithCallbackData(
+                                        text: $"{c.Name} -> {money.Currency.Name}",
+                                        callbackData: $"{cashString} {c.Name}->{moneyAsString}"))
+                        }
+                    );
+                }
+                else
+                {
+                    inlineKeyboard = new InlineKeyboardMarkup(
+                        new []
+                        {
+                            InlineKeyboardButton.WithCallbackData(text:$"{money.Currency.Name} -> {Currency.Amd.Name}", callbackData:$"{cashString} {moneyAsString}->{Currency.Amd.Name}"), 
+                            InlineKeyboardButton.WithCallbackData(text:$"{Currency.Amd.Name} -> {money.Currency.Name}", callbackData:$"{cashString} {Currency.Amd.Name}->{moneyAsString}"), 
+                        }
+                    );
+                }
+                
+                await botClient.SendTextMessageAsync(chatId, text:"What would you like to convert?", replyMarkup: inlineKeyboard);
+            }
+            else if (money != null)
+            {
+                string moneyAsString = $"{money.Amount}{money.Currency.Symbol}";
+                var inlineKeyboard = new InlineKeyboardMarkup(
+                    new[]
+                    {
+                        InlineKeyboardButton.WithCallbackData(text: $"Cash",
+                            callbackData: $"Cash {moneyAsString}"),
+                        InlineKeyboardButton.WithCallbackData(text: $"Non cash",
+                            callbackData: $"Non cash {moneyAsString}"),
+                    });
+                await botClient.SendTextMessageAsync(chatId, text:"Cash?", replyMarkup: inlineKeyboard);
+            }
+        }
+        else if (_replies.Dialogues.Any(a => a.Message.Contains(text)))
+        {
+            var a = _replies.Dialogues.First(a => a.Message.Contains(text));
+
+            if (!string.IsNullOrEmpty(a.Reply.Text))
+            {
+                await botClient.SendTextMessageAsync(chatId, a.Reply.Text, replyToMessageId: messageId);
+            }
+            else
+            {
+                await botClient.SendStickerAsync(chatId, new InputOnlineFile(a.Reply.Sticker), replyToMessageId: messageId);
+            }
+        }
+        else 
+        {
+            await botClient.SendTextMessageAsync(chatId, $"{text} isn't recognized as money");
         }
 
         return Ok();
@@ -178,7 +177,7 @@ public class AmdConverterController : ControllerBase
                 }
             }
             
-            _banksInfo.TryGetValue(bank.Name.ToLowerInvariant(), out BankInfo bankInfo);
+            _rateAmOptions.Banks.TryGetValue(bank.Name.ToLowerInvariant(), out BankInfo bankInfo);
             
             rowValues[i, 0] = bankInfo?.Alias?? bank.Name;
             rowValues[i, 1] = usedRate != null? usedRate.Value.ToString()  : "???";

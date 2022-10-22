@@ -28,7 +28,6 @@ public class Startup
         services.AddScoped<IMoneyParser, MoneyParser>(s => ActivatorUtilities.CreateInstance<MoneyParser>(s, s.GetRequiredService<ICurrencyParser>(), _configuration["DefaultCurrency"]));
         
         services.AddScoped<IRequestParser, RequestParser>(s => ActivatorUtilities.CreateInstance<RequestParser>(s, s.GetRequiredService<IMoneyParser>(), s.GetRequiredService<ICurrencyParser>(), _configuration.GetSection("Delimiters").Get<string[]>()));
-        services.AddSingleton<RateAmService>(s => ActivatorUtilities.CreateInstance<RateAmService>(s, _configuration["RateAmUrl"]));
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
