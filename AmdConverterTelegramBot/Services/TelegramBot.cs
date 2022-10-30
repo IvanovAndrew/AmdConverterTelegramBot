@@ -5,14 +5,12 @@ namespace AmdConverterTelegramBot.Services;
 
 public class TelegramBot
 {
-    private readonly IConfiguration _configuration;
     private TelegramBotClient? _botClient;
-    private string _token;
-    private string _url;
+    private readonly string _token;
+    private readonly string _url;
 
     public TelegramBot(IConfiguration configuration) : this(configuration["Token"], configuration["Url"])
     {
-        _configuration = configuration;
     }
 
     public TelegramBot(string token, string url)

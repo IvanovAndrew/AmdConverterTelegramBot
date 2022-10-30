@@ -6,6 +6,7 @@ public class Currency
     public static readonly Currency Usd = new ("USD", "$");
     public static readonly Currency Rur = new ("RUR", "₽");
     public static readonly Currency Amd = new ("AMD", "֏");
+    public static readonly Currency GBP = new ("GBP", "£");
     
     public string Name { get; private set; }
     public string Symbol { get; private set; }

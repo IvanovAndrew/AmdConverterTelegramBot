@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using AmdConverterTelegramBot.Entities;
@@ -7,45 +8,17 @@ using HtmlAgilityPack;
 
 namespace AmdConverterTelegramBot.Services
 {
-    public class RateAmService
+    public class RateAmParser
     {
-        private readonly string _sourceUrl;
-        public RateAmService(string url)
+        private readonly IMoneyParser _moneyParser;
+        private readonly CultureInfo _cultureInfo;
+        public RateAmParser(IMoneyParser moneyParser, CultureInfo cultureInfo)
         {
-            _sourceUrl = url;
+            _moneyParser = moneyParser?? throw new ArgumentNullException(nameof(moneyParser));
+            _cultureInfo = cultureInfo?? throw new ArgumentNullException(nameof(cultureInfo));
         }
         
-        public async Task<Result<Dictionary<Bank, decimal>>> Convert(Money money, Currency currency, bool toCurrency)
-        {
-            if (money.Amount <= 0) return Result<Dictionary<Bank, decimal>>.Error("Money is expected to be positive!");
-            if (currency != Currency.Amd && money.Currency != Currency.Amd) return Result<Dictionary<Bank, decimal>>.Error("One of the currencies must be AMD");
-
-            var nonDramCurrency = currency == Currency.Amd ? money.Currency : currency;
-            
-            var bankRatesLoadingResult = await LoadBankRates(_sourceUrl, nonDramCurrency);
-            
-            if (!bankRatesLoadingResult.IsSuccess) return Result<Dictionary<Bank, decimal>>.Error(bankRatesLoadingResult.ErrorMessage);
-
-            var bankRates = bankRatesLoadingResult.Value;
-
-            var requestedBanks = bankRates;
-
-            var result = new Dictionary<Bank, decimal>();
-            foreach (var bank in requestedBanks)
-            {
-                if (bank.Rates[nonDramCurrency] == Rate.Unknown)
-                {
-                    result[bank] = decimal.MaxValue;
-                    continue;
-                }
-                    
-                result[bank] = AmdConverter.Convert(money, currency, bank.Rates[nonDramCurrency], toCurrency);
-            }
-
-            return Result<Dictionary<Bank, decimal>>.Ok(result);
-        }
-        
-        private async Task<Result<List<Bank>>> LoadBankRates(string url, Currency currency)
+        public async Task<Result<List<Bank>>> ParseAsync(string url)
         {
             List<Bank> result = new List<Bank>();
             HtmlWeb html = new HtmlWeb();
@@ -59,7 +32,7 @@ namespace AmdConverterTelegramBot.Services
 
             int bankNameIndex = 0;
             int dateIndex = 0;
-            Indices indices = new Indices();
+            Dictionary<Currency, Indices> currencyToIndices = new Dictionary<Currency, Indices>();
             bool indicesInitialized = false;
             
             foreach (HtmlNode row in table.SelectNodes("tr"))
@@ -97,9 +70,9 @@ namespace AmdConverterTelegramBot.Services
                         {
                             dateIndex = innerIndex;
                         }
-                        else if (new[] { $"1 {currency.Name}"}.Contains(innerText))
+                        else if (_moneyParser.TryParse(innerText, out var money))
                         {
-                            indices = new Indices(innerIndex, innerIndex + 1);
+                            currencyToIndices[money.Currency] = new Indices(innerIndex, innerIndex + 1);
                         }
 
                         int shift = selectNodes[i].GetAttributeValue("colspan", 1);
@@ -108,7 +81,6 @@ namespace AmdConverterTelegramBot.Services
                     }
 
                     indicesInitialized = true;
-                    continue;
                 }
 
                 else if (row.GetAttributes().Any(c => c.Name == "id"))
@@ -119,8 +91,12 @@ namespace AmdConverterTelegramBot.Services
                     {
                         Name = values[bankNameIndex]
                     };
-                    var rate = ParseRate(values, indices);
-                    bank.AddRate(currency, rate);
+
+                    foreach (var (currency, indices) in currencyToIndices)
+                    {
+                        var rate = ParseRate(values, indices);
+                        bank.AddRate(currency, rate);
+                    }
 
                     result.Add(bank);
                 }
@@ -132,9 +108,9 @@ namespace AmdConverterTelegramBot.Services
         private Rate ParseRate(string[] values, Indices indices)
         {
             if (string.IsNullOrEmpty(values[indices.Buy]) || string.IsNullOrEmpty(values[indices.Sell]))
-                    return Rate.Unknown;
-            
-            return new Rate(decimal.Parse(values[indices.Buy]), decimal.Parse(values[indices.Sell]));
+                return Rate.Unknown;
+        
+            return new Rate(decimal.Parse(values[indices.Buy], _cultureInfo), decimal.Parse(values[indices.Sell], _cultureInfo));
         }
         
         private struct Indices
@@ -147,23 +123,6 @@ namespace AmdConverterTelegramBot.Services
                 Buy = buy;
                 Sell = sell;
             }
-        }
-    }
-
-    public static class AmdConverter
-    {
-        public static decimal Convert(Money money, Currency currency, Rate rate, bool toCurrency)
-        {
-            if (money.Currency == Currency.Amd)
-            {
-                return toCurrency? money.Amount / rate.Sell : money.Amount / rate.Buy;
-            } 
-            else if (currency == Currency.Amd)
-            {
-                return toCurrency ? money.Amount * rate.Buy : money.Amount * rate.Sell;
-            }
-
-            throw new ArgumentException("One of the currencies should be AMD!");
         }
     }
 }

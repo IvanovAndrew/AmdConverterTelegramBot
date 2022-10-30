@@ -27,9 +27,9 @@ namespace AmdConverterTelegramBot.Entities
             _defaultCurrency = defaultCurrency;
         }
         
-        public bool TryParse(string? text, out Money? money)
+        public bool TryParse(string? text, out Money money)
         {
-            money = null;
+            money = new Money();
             
             Regex amountRegex = new Regex(@"((\d+\s?)+\.?\d*)");
     

@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AmdConverterTelegramBot.Entities;
 using AmdConverterTelegramBot.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -22,16 +17,16 @@ public class AmdConverterController : ControllerBase
     private readonly ILogger _logger;
     private readonly TelegramBot _bot;
     private readonly IRequestParser _requestParser;
+    private readonly Parser _parser;
     
-    private readonly RateAmOptions _rateAmOptions;
     private readonly Replies _replies;
 
-    public AmdConverterController(ILogger<AmdConverterController> logger, TelegramBot bot, IRequestParser requestParser, RateAmOptions rateOptions, Replies replies)
+    public AmdConverterController(ILogger<AmdConverterController> logger, TelegramBot bot, IRequestParser requestParser, Parser parser, Replies replies)
     {
         _logger = logger;
         _bot = bot;
         _requestParser = requestParser;
-        _rateAmOptions = rateOptions;
+        _parser = parser;
         _replies = replies;
     }
     
@@ -69,17 +64,27 @@ public class AmdConverterController : ControllerBase
         {
             if (money != null && cash != null && currency != null && toCurrency != null)
             {
-                var rateService = new RateAmService(cash.Value ? _rateAmOptions.CashUrl : _rateAmOptions.NonCashUrl);
-                var exchangesResult = await rateService.Convert(money, currency, toCurrency.Value);
+                var loadingResult = cash.Value? await _parser.LoadCashRates() : await _parser.LoadNonCashRates();
                 
-                if (!exchangesResult.IsSuccess)
+                if (!loadingResult.IsSuccess)
                 {
-                    await botClient.SendTextMessageAsync(chatId, $"{exchangesResult.ErrorMessage}");
+                    await botClient.SendTextMessageAsync(chatId, $"{loadingResult.ErrorMessage}");
                 }
                 else
                 {
-                    string replyText = FormatTable(exchangesResult.Value, currency, money, toCurrency.Value);
-                    await botClient.SendTextMessageAsync(chatId, $"{(cash.Value? "Cash" : "Non cash")}{Environment.NewLine}```{replyText}```", ParseMode.MarkdownV2);
+                    var rates = loadingResult.Value;
+
+                    var convertedValues = AmdConverter.ConvertAllBanks(rates, money, currency, toCurrency?? true);
+
+                    if (!convertedValues.IsSuccess)
+                    {
+                        await botClient.SendTextMessageAsync(chatId, convertedValues.ErrorMessage);
+                    }
+                    else
+                    {
+                        string replyText = FormatTable(convertedValues.Value, currency, money, toCurrency.Value);
+                        await botClient.SendTextMessageAsync(chatId, $"{(cash.Value? "Cash" : "Non cash")}{Environment.NewLine}```{replyText}```", ParseMode.MarkdownV2);
+                    }
                 }
             }
             else if (money != null && cash != null)
@@ -177,9 +182,9 @@ public class AmdConverterController : ControllerBase
                 }
             }
             
-            _rateAmOptions.Banks.TryGetValue(bank.Name.ToLowerInvariant(), out BankInfo bankInfo);
+            //_rateSources.Banks.TryGetValue(bank.Name.ToLowerInvariant(), out BankInfo bankInfo);
             
-            rowValues[i, 0] = bankInfo?.Alias?? bank.Name;
+            rowValues[i, 0] = /*bankInfo?.Alias??*/ bank.Name.Replace("Bank Armenia", "").Replace("Bank (Armenia)", "").Trim();
             rowValues[i, 1] = usedRate != null? usedRate.Value.ToString()  : "???";
             rowValues[i, 2] = rate != Rate.Unknown? values.ToString("0.##") + $" {currency.Symbol}" : "???";
             i++;
