@@ -186,7 +186,7 @@ public class AmdConverterController : ControllerBase
             
             rowValues[i, 0] = /*bankInfo?.Alias??*/ bank.Name.Replace("Bank Armenia", "").Replace("Bank (Armenia)", "").Trim();
             rowValues[i, 1] = usedRate != null? usedRate.Value.ToString()  : "???";
-            rowValues[i, 2] = rate != Rate.Unknown? values.ToString("0.##") + $" {currency.Symbol}" : "???";
+            rowValues[i, 2] = rate != Rate.Unknown? values.ToString("0.##") + $"{currency.Symbol}" : "???";
             i++;
         }
 
