@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading.Tasks;
 using AmdConverterTelegramBot;
 using AmdConverterTelegramBot.Entities;
@@ -14,7 +15,7 @@ namespace AmdConverterTelegramBotTests
         {
             // Act
             var bank =
-                await new SasSiteParser(new CurrencyParser(new Dictionary<string, string>())).ParseAsync(
+                await new SasSiteParser(new CurrencyParser(new Dictionary<string, string>()), CultureInfo.InvariantCulture).ParseAsync(
                     "https://www.sas.am/food/en/");
             
             // Assert

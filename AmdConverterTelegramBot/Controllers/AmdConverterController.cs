@@ -1,3 +1,4 @@
+using System.Globalization;
 using AmdConverterTelegramBot.Entities;
 using AmdConverterTelegramBot.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -82,7 +83,17 @@ public class AmdConverterController : ControllerBase
                     }
                     else
                     {
-                        string replyText = FormatTable(convertedValues.Value, currency, money, toCurrency.Value);
+                        IOrderedEnumerable<(Bank, decimal)> sortedValues; 
+                        if (toCurrency.Value && currency == Currency.Amd)
+                        {
+                            sortedValues = convertedValues.Value.Select(x => (x.Key, x.Value)).OrderByDescending(x => x.Value);
+                        }
+                        else
+                        {
+                            sortedValues = convertedValues.Value.Select(x => (x.Key, x.Value)).OrderBy(x => x.Value);
+                        }
+                        
+                        string replyText = FormatTable(sortedValues, currency, money, toCurrency.Value, convertedValues.Value.Count);
                         await botClient.SendTextMessageAsync(chatId, $"{(cash.Value? "Cash" : "Non cash")}{Environment.NewLine}```{replyText}```", ParseMode.MarkdownV2);
                     }
                 }
@@ -160,12 +171,12 @@ public class AmdConverterController : ControllerBase
         return Ok();
     }
 
-    private string FormatTable(Dictionary<Bank, decimal> exchanges, Currency currency, Money money, bool toCurrency)
+    private string FormatTable(IOrderedEnumerable<(Bank, decimal)> exchanges, Currency currency, Money money, bool toCurrency, int rowNumber)
     {
-        string[,] rowValues = new string[exchanges.Count, 3];
+        string[,] rowValues = new string[rowNumber, 3];
 
         int i = 0;
-        foreach (var (bank, values) in exchanges.OrderBy(kvp => kvp.Value))
+        foreach (var (bank, values) in exchanges)
         {
             var rate = bank.Rates[currency != Currency.Amd? currency : money.Currency];
 
@@ -182,10 +193,8 @@ public class AmdConverterController : ControllerBase
                 }
             }
             
-            //_rateSources.Banks.TryGetValue(bank.Name.ToLowerInvariant(), out BankInfo bankInfo);
-            
             rowValues[i, 0] = /*bankInfo?.Alias??*/ bank.Name.Replace("Bank Armenia", "").Replace("Bank (Armenia)", "").Trim();
-            rowValues[i, 1] = usedRate != null? usedRate.Value.ToString()  : "???";
+            rowValues[i, 1] = usedRate != null? usedRate.Value.ToString(CultureInfo.InvariantCulture)  : "???";
             rowValues[i, 2] = rate != Rate.Unknown? values.ToString("0.##") + $"{currency.Symbol}" : "???";
             i++;
         }
