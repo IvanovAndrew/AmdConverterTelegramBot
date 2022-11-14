@@ -93,8 +93,15 @@ public class AmdConverterController : ControllerBase
                             sortedValues = convertedValues.Value.Select(x => (x.Key, x.Value)).OrderBy(x => x.Value);
                         }
                         
+                        var conversion = toCurrency.Value
+                            ? $"{money} -> {currency.Symbol}"
+                            : $"{currency.Symbol} -> {money}";
+                        
+                        var replyTitle = EscapeString($"{conversion} ({(cash.Value? "Cash" : "Non cash")})");
+                        
                         string replyText = FormatTable(sortedValues, currency, money, toCurrency.Value, convertedValues.Value.Count);
-                        await botClient.SendTextMessageAsync(chatId, $"{(cash.Value? "Cash" : "Non cash")}{Environment.NewLine}```{replyText}```", ParseMode.MarkdownV2);
+                        
+                        await botClient.SendTextMessageAsync(chatId, $"{replyTitle}{Environment.NewLine}```{replyText}```", ParseMode.MarkdownV2);
                     }
                 }
             }
@@ -200,9 +207,20 @@ public class AmdConverterController : ControllerBase
         }
 
         var lastColumnName = toCurrency
-            ? $"{money} -> {currency.Symbol}"
-            : $"{currency.Symbol} -> {money}"; 
+            ? $"{money.Currency.Symbol} -> {currency.Symbol}"
+            : $"{currency.Symbol} -> {money.Currency.Symbol}"; 
 
         return MarkdownFormatter.FormatTable(new[] { "Bank", "Rate", lastColumnName }, rowValues);
+    }
+
+    private string EscapeString(string s)
+    {
+        var result = s;
+        foreach (var symbol in new []{"-", "<", ">", "(", ")"})
+        {
+            result = result.Replace(symbol, $"\\{symbol}");
+        }
+
+        return result;
     }
 }
