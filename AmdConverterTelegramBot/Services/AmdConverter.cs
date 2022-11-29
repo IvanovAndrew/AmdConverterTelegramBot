@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using AmdConverterTelegramBot.Entities;
 
 namespace AmdConverterTelegramBot.Services;

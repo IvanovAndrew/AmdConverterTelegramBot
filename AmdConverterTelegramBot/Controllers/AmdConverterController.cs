@@ -21,6 +21,7 @@ public class AmdConverterController : ControllerBase
     private readonly Parser _parser;
     
     private readonly Replies _replies;
+    
 
     public AmdConverterController(ILogger<AmdConverterController> logger, TelegramBot bot, IRequestParser requestParser, Parser parser, Replies replies)
     {
@@ -52,6 +53,8 @@ public class AmdConverterController : ControllerBase
             chatId = update.CallbackQuery.Message.Chat.Id;
             messageId = update.CallbackQuery.Message.MessageId;
         }
+
+        text = TelegramEscaper.Decode(text);
 
         _logger.LogInformation($"{text} is received");
         
@@ -97,11 +100,11 @@ public class AmdConverterController : ControllerBase
                             ? $"{money} -> {currency.Symbol}"
                             : $"{currency.Symbol} -> {money}";
                         
-                        var replyTitle = EscapeString($"{conversion} ({(cash.Value? "Cash" : "Non cash")})");
+                        var replyTitle = $"{conversion} ({(cash.Value? "Cash" : "Non cash")})";
                         
                         string replyText = FormatTable(sortedValues, currency, money, toCurrency.Value, convertedValues.Value.Count);
                         
-                        await botClient.SendTextMessageAsync(chatId, $"{replyTitle}{Environment.NewLine}```{replyText}```", ParseMode.MarkdownV2);
+                        await botClient.SendTextMessageAsync(chatId, TelegramEscaper.EscapeString($"{replyTitle}{Environment.NewLine}```{replyText}```"), ParseMode.MarkdownV2);
                     }
                 }
             }
@@ -135,8 +138,8 @@ public class AmdConverterController : ControllerBase
                     inlineKeyboard = new InlineKeyboardMarkup(
                         new []
                         {
-                            InlineKeyboardButton.WithCallbackData(text:$"{money.Currency.Name} -> {Currency.Amd.Name}", callbackData:$"{cashString} {moneyAsString}->{Currency.Amd.Name}"), 
-                            InlineKeyboardButton.WithCallbackData(text:$"{Currency.Amd.Name} -> {money.Currency.Name}", callbackData:$"{cashString} {Currency.Amd.Name}->{moneyAsString}"), 
+                            InlineKeyboardButton.WithCallbackData(text:$"{money.Currency.Name} -> {Currency.Amd.Name}", callbackData: $"{cashString} {moneyAsString}->{Currency.Amd.Name}"), 
+                            InlineKeyboardButton.WithCallbackData(text:$"{Currency.Amd.Name} -> {money.Currency.Name}", callbackData: $"{cashString} {Currency.Amd.Name}->{moneyAsString}"), 
                         }
                     );
                 }
@@ -211,16 +214,5 @@ public class AmdConverterController : ControllerBase
             : $"{currency.Symbol} -> {money.Currency.Symbol}"; 
 
         return MarkdownFormatter.FormatTable(new[] { "Bank", "Rate", lastColumnName }, rowValues);
-    }
-
-    private string EscapeString(string s)
-    {
-        var result = s;
-        foreach (var symbol in new []{"-", "<", ">", "(", ")"})
-        {
-            result = result.Replace(symbol, $"\\{symbol}");
-        }
-
-        return result;
     }
 }

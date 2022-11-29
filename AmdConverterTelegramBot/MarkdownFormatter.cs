@@ -29,7 +29,6 @@ public static class MarkdownFormatter
             builder.Append(@$"\|{new string('-', columnWidth[i])}");
         }
 
-        builder.Append(@"\|");
         builder.AppendLine();
 
         int rowsCount = rows.GetLength(0);
