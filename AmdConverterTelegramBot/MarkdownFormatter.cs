@@ -15,18 +15,18 @@ public static class MarkdownFormatter
         
         // telegram unfixed bug: leading symbol is trimmed
         // https://github.com/telegramdesktop/tdesktop/issues/1521
-        builder.AppendLine(@"\|");
+        builder.AppendLine(@"|");
         
         for (int i = 0; i < titles.Length; i++)
         {
-            builder.Append($@"\|{titles[i].PadLeft(columnWidth[i])}");
+            builder.Append($@"|{titles[i].PadLeft(columnWidth[i])}");
         }
-        builder.Append(@"\|");
+        builder.Append(@"|");
         builder.AppendLine();
         
         for (int i = 0; i < titles.Length; i++)
         {
-            builder.Append(@$"\|{new string('-', columnWidth[i])}");
+            builder.Append(@$"|{new string('-', columnWidth[i])}");
         }
 
         builder.AppendLine();
@@ -34,11 +34,11 @@ public static class MarkdownFormatter
         int rowsCount = rows.GetLength(0);
         for (int i = 0; i < rowsCount; i++)
         {
-            builder.Append(@"\|");
+            builder.Append(@"|");
             for(int j = 0; j < rows.GetLength(1); j++)
             {
                 builder.Append($"{rows[i, j]}".PadLeft(columnWidth[j]));
-                builder.Append(@"\|");
+                builder.Append(@"|");
             }
 
             builder.AppendLine();
