@@ -6,6 +6,7 @@ public class RateSources
     public string RateamCashUrl { get; }
     public string RateamNonCashUrl { get; }
     public string SasUrl { get; }
+    public string MirUrl { get; }
 
     public RateSources(IConfiguration configuration)
     {
@@ -13,6 +14,7 @@ public class RateSources
         RateamCashUrl = configuration["RateSources:RateamCashUrl"];
         RateamNonCashUrl = configuration["RateSources:RateamNonCashUrl"];
         SasUrl = configuration["RateSources:SasUrl"];
+        MirUrl = configuration["RateSources:MirUrl"];
     }
 }
 

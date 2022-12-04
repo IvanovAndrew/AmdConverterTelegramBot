@@ -14,7 +14,7 @@ public class SasSiteParser
         _cultureInfo = cultureInfo;
     }
 
-    public async Task<Bank> ParseAsync(string url)
+    public async Task<ExchangePoint> ParseAsync(string url)
     {
         if (string.IsNullOrEmpty(url)) throw new ArgumentException(nameof(url));
         
@@ -23,9 +23,9 @@ public class SasSiteParser
         return Parse(htmlDocument);
     }
     
-    private Bank Parse(HtmlDocument htmlDocument)
+    private ExchangePoint Parse(HtmlDocument htmlDocument)
     {
-        var bank = new Bank(){Name = "SAS"};
+        var exchangePoint = new ExchangePoint(){Name = "SAS", BaseCurrency = Currency.Amd};
         var table = htmlDocument.DocumentNode.SelectSingleNode("//div[@class='exchange-table']");
 
         foreach (var row in table.SelectNodes("//div[@class='exchange-table__row']"))
@@ -36,12 +36,13 @@ public class SasSiteParser
                 var buy = ParseRate(nodes[1].SelectSingleNode("span").InnerText);
                 var sell= ParseRate(nodes[2].SelectSingleNode("span").InnerText);
                 
-                bank.AddRate(currency!, new Rate(buy, sell));
+                exchangePoint.AddRate(new Conversion {From = Currency.Amd, To = currency!}, new Rate(buy));
+                exchangePoint.AddRate(new Conversion {From = currency!, To =Currency.Amd}, new Rate(sell));
             }
             
         }
         
-        return bank;
+        return exchangePoint;
     }
 
     private decimal ParseRate(string s) => decimal.Parse(s, _cultureInfo);

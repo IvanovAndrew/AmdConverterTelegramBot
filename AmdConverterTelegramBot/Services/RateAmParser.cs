@@ -18,14 +18,14 @@ namespace AmdConverterTelegramBot.Services
             _cultureInfo = cultureInfo?? throw new ArgumentNullException(nameof(cultureInfo));
         }
         
-        public async Task<Result<List<Bank>>> ParseAsync(string url)
+        public async Task<Result<List<ExchangePoint>>> ParseAsync(string url)
         {
-            List<Bank> result = new List<Bank>();
+            List<ExchangePoint> result = new();
             HtmlWeb html = new HtmlWeb();
             var webPage = await html.LoadFromWebAsync(url);
             if (webPage == null)
             {
-                return Result<List<Bank>>.Error($"{url} is unavailable");
+                return Result<List<ExchangePoint>>.Error($"{url} is unavailable");
             }
 
             var table = webPage.DocumentNode.SelectSingleNode("//table[@id='rb']");
@@ -87,30 +87,34 @@ namespace AmdConverterTelegramBot.Services
                 {
                     var values = selectNodes.Select(n => n.InnerText.Trim()).ToArray();
 
-                    var bank = new Bank
+                    var bank = new ExchangePoint()
                     {
-                        Name = values[bankNameIndex]
+                        Name = values[bankNameIndex],
+                        BaseCurrency = Currency.Amd,
                     };
 
                     foreach (var (currency, indices) in currencyToIndices)
                     {
-                        var rate = ParseRate(values, indices);
-                        bank.AddRate(currency, rate);
+                        var rate = ParseRate(values, indices.Sell);
+                        bank.AddRate(new Conversion {From = Currency.Amd, To = currency}, rate);
+                        
+                        rate = ParseRate(values, indices.Buy);
+                        bank.AddRate(new Conversion {From = currency, To = Currency.Amd}, rate);
                     }
 
                     result.Add(bank);
                 }
             }
 
-            return Result<List<Bank>>.Ok(result);
+            return Result<List<ExchangePoint>>.Ok(result);
         }
 
-        private Rate ParseRate(string[] values, Indices indices)
+        private Rate ParseRate(string[] values, int index)
         {
-            if (string.IsNullOrEmpty(values[indices.Buy]) || string.IsNullOrEmpty(values[indices.Sell]))
+            if (string.IsNullOrEmpty(values[index]))
                 return Rate.Unknown;
         
-            return new Rate(decimal.Parse(values[indices.Buy], _cultureInfo), decimal.Parse(values[indices.Sell], _cultureInfo));
+            return new Rate(decimal.Parse(values[index], _cultureInfo));
         }
         
         private struct Indices

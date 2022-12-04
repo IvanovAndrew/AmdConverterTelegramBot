@@ -64,9 +64,9 @@ public class AmdConverterController : ControllerBase
             await botClient.SendTextMessageAsync(chatId, "Hello! Enter the price in AMD, USD, EUR, or RUB");
         }
             
-        else if (_requestParser.TryParse(text, out var money, out var cash, out var currency, out var toCurrency))
+        else if (_requestParser.TryParse(text, out var money, out var cash, out var conversion))
         {
-            if (money != null && cash != null && currency != null && toCurrency != null)
+            if (money != null && cash != null && conversion != null)
             {
                 var loadingResult = cash.Value? await _parser.LoadCashRates() : await _parser.LoadNonCashRates();
                 
@@ -78,34 +78,25 @@ public class AmdConverterController : ControllerBase
                 {
                     var rates = loadingResult.Value;
 
-                    var convertedValues = AmdConverter.ConvertAllBanks(rates, money, currency, toCurrency?? true);
+                    var conversionInfo = rates.Select(ep => ep.Convert(conversion, money)).Where(c => c != null).Select(c => c!);
 
-                    if (!convertedValues.IsSuccess)
+                    IOrderedEnumerable<ConversionInfo> sortedValues; 
+                    if (conversion != null && conversion.To == Currency.Amd)
                     {
-                        await botClient.SendTextMessageAsync(chatId, convertedValues.ErrorMessage);
+                        sortedValues = conversionInfo.OrderByDescending(x => x.ToMoney.Amount);
                     }
                     else
                     {
-                        IOrderedEnumerable<(Bank, decimal)> sortedValues; 
-                        if (toCurrency.Value && currency == Currency.Amd)
-                        {
-                            sortedValues = convertedValues.Value.Select(x => (x.Key, x.Value)).OrderByDescending(x => x.Value);
-                        }
-                        else
-                        {
-                            sortedValues = convertedValues.Value.Select(x => (x.Key, x.Value)).OrderBy(x => x.Value);
-                        }
-                        
-                        var conversion = toCurrency.Value
-                            ? $"{money} -> {currency.Symbol}"
-                            : $"{currency.Symbol} -> {money}";
-                        
-                        var replyTitle = $"{conversion} ({(cash.Value? "Cash" : "Non cash")})";
-                        
-                        string replyText = FormatTable(sortedValues, currency, money, toCurrency.Value, convertedValues.Value.Count);
-                        
-                        await botClient.SendTextMessageAsync(chatId, TelegramEscaper.EscapeString($"{replyTitle}{Environment.NewLine}```{replyText}```"), ParseMode.MarkdownV2);
+                        sortedValues = conversionInfo.OrderBy(x => x.FromMoney.Amount);
                     }
+                    
+                    var replyTitle = (money.Currency == conversion!.From?
+                        $"{money} -> {conversion.To}" : $"{conversion.From} -> {money}") + 
+                        $" ({(cash.Value? "Cash" : "Non cash")})";
+                    
+                    string replyText = FormatTable(sortedValues, conversion.From == money.Currency? conversion.To : conversion.From, conversionInfo.Count());
+                    
+                    await botClient.SendTextMessageAsync(chatId, TelegramEscaper.EscapeString($"{replyTitle}{Environment.NewLine}```{replyText}```"), ParseMode.MarkdownV2);
                 }
             }
             else if (money != null && cash != null)
@@ -181,38 +172,23 @@ public class AmdConverterController : ControllerBase
         return Ok();
     }
 
-    private string FormatTable(IOrderedEnumerable<(Bank, decimal)> exchanges, Currency currency, Money money, bool toCurrency, int rowNumber)
+    private string FormatTable(IOrderedEnumerable<ConversionInfo> exchanges, Currency currency, int rowNumber)
     {
         string[,] rowValues = new string[rowNumber, 3];
 
         int i = 0;
-        foreach (var (bank, values) in exchanges)
+        foreach (var conversionInfo in exchanges)
         {
-            var rate = bank.Rates[currency != Currency.Amd? currency : money.Currency];
+            rowValues[i, 0] = conversionInfo.ExchangePoint.Name.Replace("Bank Armenia", "").Replace("Bank (Armenia)", "").Trim();
+            rowValues[i, 1] = conversionInfo.Rate != Rate.Unknown? conversionInfo.Rate.FXRate.ToString("0.##", CultureInfo.InvariantCulture) : "???";
 
-            decimal? usedRate = null;
-            if (rate != Rate.Unknown)
-            {
-                if (toCurrency)
-                {
-                    usedRate = money.Currency == Currency.Amd ? rate.Sell : rate.Buy;
-                }
-                else
-                {
-                    usedRate = money.Currency == Currency.Amd ? rate.Buy : rate.Sell;
-                }
-            }
-            
-            rowValues[i, 0] = /*bankInfo?.Alias??*/ bank.Name.Replace("Bank Armenia", "").Replace("Bank (Armenia)", "").Trim();
-            rowValues[i, 1] = usedRate != null? usedRate.Value.ToString(CultureInfo.InvariantCulture)  : "???";
-            rowValues[i, 2] = rate != Rate.Unknown? values.ToString("0.##") + $"{currency.Symbol}" : "???";
+            var money = conversionInfo.FromMoney.Currency == currency
+                ? conversionInfo.FromMoney
+                : conversionInfo.ToMoney;
+            rowValues[i, 2] = conversionInfo.Rate != Rate.Unknown? money.Amount.ToString("0.##") + $"{currency.Symbol}" : "???";
             i++;
         }
 
-        var lastColumnName = toCurrency
-            ? $"{money.Currency.Symbol} -> {currency.Symbol}"
-            : $"{currency.Symbol} -> {money.Currency.Symbol}"; 
-
-        return MarkdownFormatter.FormatTable(new[] { "Bank", "Rate", lastColumnName }, rowValues);
+        return MarkdownFormatter.FormatTable(new[] { "Bank", "Rate", exchanges.First().Conversion.ToString() }, rowValues);
     }
 }

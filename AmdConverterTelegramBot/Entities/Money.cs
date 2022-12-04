@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace AmdConverterTelegramBot.Entities
 {
-    public class Money
+    public record Money
     {
         public Currency Currency { get; init; }
         public decimal Amount { get; init; }

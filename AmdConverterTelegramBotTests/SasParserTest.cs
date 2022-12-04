@@ -20,9 +20,13 @@ namespace AmdConverterTelegramBotTests
             
             // Assert
             Assert.Equal("SAS", bank.Name);
-            Assert.Contains(Currency.Usd, bank.Rates.Keys);
-            Assert.Contains(Currency.Eur, bank.Rates.Keys);
-            Assert.Contains(Currency.Rur, bank.Rates.Keys);
+            Assert.Contains(new Conversion(){From = Currency.Amd, To = Currency.Usd}, bank.Rates.Keys);
+            Assert.Contains(new Conversion(){From = Currency.Amd, To = Currency.Eur}, bank.Rates.Keys);
+            Assert.Contains(new Conversion(){From = Currency.Amd, To = Currency.Rur}, bank.Rates.Keys);
+            
+            Assert.Contains(new Conversion(){From = Currency.Usd, To = Currency.Amd}, bank.Rates.Keys);
+            Assert.Contains(new Conversion(){From = Currency.Eur, To = Currency.Amd}, bank.Rates.Keys);
+            Assert.Contains(new Conversion(){From = Currency.Rur, To = Currency.Amd}, bank.Rates.Keys);
         }
     }
 }

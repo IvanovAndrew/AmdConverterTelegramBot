@@ -1,6 +1,6 @@
 namespace AmdConverterTelegramBot.Entities;
 
-public class Currency
+public record Currency
 {
     public static readonly Currency Eur = new ("EUR", "€");
     public static readonly Currency Usd = new ("USD", "$");
@@ -31,5 +31,10 @@ public class Currency
         }
 
         return currencies;
+    }
+
+    public override string ToString()
+    {
+        return Symbol;
     }
 }

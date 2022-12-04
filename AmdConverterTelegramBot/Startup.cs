@@ -31,6 +31,7 @@ public class Startup
 
         var cultureInfo = new CultureInfo(_configuration["CultureInfo"]);
         services.AddScoped<SasSiteParser>(s => ActivatorUtilities.CreateInstance<SasSiteParser>(s, s.GetRequiredService<ICurrencyParser>(), cultureInfo));
+        services.AddScoped<MirSiteParser>(s => ActivatorUtilities.CreateInstance<MirSiteParser>(s));
         services.AddScoped<RateAmParser>(s =>
             ActivatorUtilities.CreateInstance<RateAmParser>(s, s.GetRequiredService<IMoneyParser>(), cultureInfo));
         services.AddScoped<Parser>(s => ActivatorUtilities.CreateInstance<Parser>(s, s.GetRequiredService<RateAmParser>()));
