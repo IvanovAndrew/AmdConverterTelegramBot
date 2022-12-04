@@ -17,7 +17,7 @@ public class MIRSiteParserTest
             
         // Assert
         Assert.Equal("MIR", exchangePoint.Name);
-        Assert.Equal(Currency.Rur, exchangePoint.BaseCurrency);
+        Assert.Equal(Currency.Amd, exchangePoint.BaseCurrency);
         Assert.Contains(new Conversion(){From = Currency.Rur, To = Currency.Amd}, exchangePoint.Rates.Keys);
         Assert.DoesNotContain(new Conversion(){From = Currency.Amd, To = Currency.Rur}, exchangePoint.Rates.Keys);
     }
