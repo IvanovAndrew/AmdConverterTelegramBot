@@ -5,7 +5,9 @@ namespace AmdConverterTelegramBot;
 
 public interface IRequestParser
 {
-    bool TryParse(string text, out Money? money, out bool? cash, out Conversion? conversion);
+    bool TryParseMoney(string? text, out Money money);
+    bool TryParseMoneyAndCash(string? text, out Money money, out bool cash);
+    bool TryParseFullRequest(string? text, out Money money, out bool cash, out Conversion conversion);
 }
 
 public class RequestParser : IRequestParser
@@ -21,54 +23,74 @@ public class RequestParser : IRequestParser
         _delimiters = delimiters;
     }
 
-    public bool TryParse(string s, out Money? money, out bool? cash, out Conversion? conversion)
+    public bool TryParseMoney(string? text, out Money money)
     {
-        var lowerCaseText = s.ToLowerInvariant();
-        cash = ParseCash(lowerCaseText);
+        return _moneyParser.TryParse(text, out money);
+    }
+
+    public bool TryParseMoneyAndCash(string? text, out Money money, out bool cash)
+    {
+        money = new Money();
         
-        var parts = lowerCaseText.Replace("non cash", "").Replace("cash", "").Split(_delimiters, StringSplitOptions.RemoveEmptyEntries);
-
-        money = null;
-        conversion = null;
-        
-        if (parts.Length == 0) return false;
-
-        var convertFrom = Currency.Amd;
-
-        if (_moneyParser.TryParse(parts[0], out money))
+        var lowerCaseText = (text?? "").ToLowerInvariant();
+        if (TryParseCash(lowerCaseText, out cash))
         {
-            convertFrom = money!.Currency;
+            var parts = lowerCaseText.Replace("non cash", "").Replace("cash", "");
+
+            if (_moneyParser.TryParse(parts, out money))
+            {
+                return true;
+            }
         }
-        else if (_currencyParser.TryParse(parts[0], out var currency))
+
+        return false;
+    }
+
+    public bool TryParseFullRequest(string? s, out Money money, out bool cash, out Conversion conversion)
+    {
+        conversion = new Conversion();
+        
+        if (!TryParseMoneyAndCash(s, out money, out cash))
         {
-            convertFrom = currency!;
+            return false;
+        }
+        
+        var parts = (s?? String.Empty).Replace("non cash", "").Replace("cash", "").Split(_delimiters, StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length != 2) return false;
+
+        if (_currencyParser.TryParse(parts[0], out var currencyFrom))
+        {
+            conversion = new Conversion { From = currencyFrom, To = money.Currency };
+        }
+        else if (_currencyParser.TryParse(parts[1], out var currencyTo))
+        {
+            conversion = new Conversion { From = money.Currency, To = currencyTo };
         }
         else
         {
             return false;
         }
-
-        if (parts.Length == 1) return true;
-
-        if (_currencyParser.TryParse(parts[1], out var currencyTo))
-        {
-            conversion = new Conversion { From = convertFrom, To = currencyTo! };
-        }
-        else if (_moneyParser.TryParse(parts[1], out money))
-        {
-            conversion = new Conversion { From = convertFrom, To = money!.Currency };
-        }
-
+        
         return true;
     }
 
-    private bool? ParseCash(string s)
+    private bool TryParseCash(string s, out bool cash)
     {
+        cash = false;
+
         if (s.StartsWith("cash"))
+        {
+            cash = true;
             return true;
+        }
 
-        if (s.StartsWith("non cash")) return false;
+        if (s.StartsWith("non cash"))
+        {
+            cash = false;
+            return true;
+        }
 
-        return null;
+        return false;
     }
 }

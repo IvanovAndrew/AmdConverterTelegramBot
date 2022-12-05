@@ -5,7 +5,7 @@ namespace AmdConverterTelegramBot;
 
 public interface ICurrencyParser
 {
-    bool TryParse(string text, out Currency? currency);
+    bool TryParse(string text, out Currency currency);
 }
 
 public class CurrencyParser : ICurrencyParser
@@ -17,7 +17,7 @@ public class CurrencyParser : ICurrencyParser
         _synonyms = synonyms;
     }
     
-    public bool TryParse(string text, out Currency? currency)
+    public bool TryParse(string text, out Currency currency)
     {
         var currencies = Currency.GetAvailableCurrencies().ToDictionary(c => c.Name);
         
@@ -37,6 +37,9 @@ public class CurrencyParser : ICurrencyParser
         }
 
         currency = Currency.GetAvailableCurrencies().FirstOrDefault(c => c.Symbol == str);
-        return currency != null;
+        var result = currency != null;
+        currency ??= Currency.Amd;
+        
+        return result;
     }
 }

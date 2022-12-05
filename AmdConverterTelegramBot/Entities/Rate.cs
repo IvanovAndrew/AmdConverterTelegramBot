@@ -3,7 +3,7 @@ namespace AmdConverterTelegramBot.Entities;
 public class Rate
 {
     public readonly decimal FXRate;
-    public static readonly Rate Unknown = new Rate(decimal.MaxValue);
+    public static readonly Rate Unknown = new (decimal.MaxValue);
 
     public Rate(decimal value)
     {
