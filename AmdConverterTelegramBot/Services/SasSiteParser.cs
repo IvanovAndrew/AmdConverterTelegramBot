@@ -36,8 +36,8 @@ public class SasSiteParser
                 var buy = ParseRate(nodes[1].SelectSingleNode("span").InnerText);
                 var sell= ParseRate(nodes[2].SelectSingleNode("span").InnerText);
                 
-                exchangePoint.AddRate(new Conversion {From = Currency.Amd, To = currency!}, new Rate(buy));
-                exchangePoint.AddRate(new Conversion {From = currency!, To =Currency.Amd}, new Rate(sell));
+                exchangePoint.AddRate(new Conversion {From = Currency.Amd, To = currency!}, new Rate(sell));
+                exchangePoint.AddRate(new Conversion {From = currency!, To = Currency.Amd}, new Rate(buy));
             }
             
         }
