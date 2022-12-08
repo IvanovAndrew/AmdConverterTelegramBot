@@ -81,11 +81,11 @@ public class AmdConverterController : ControllerBase
                 IOrderedEnumerable<ConversionInfo> sortedValues; 
                 if (conversion.To == Currency.Amd)
                 {
-                    sortedValues = conversionInfo.OrderByDescending(x => x.ToMoney.Amount);
+                    sortedValues = conversionInfo.OrderByDescending(x => x.Rate.FXRate);
                 }
                 else
                 {
-                    sortedValues = conversionInfo.OrderBy(x => x.FromMoney.Amount);
+                    sortedValues = conversionInfo.OrderBy(x => x.Rate.FXRate);
                 }
                 
                 var replyTitle = (money.Currency == conversion!.From?
