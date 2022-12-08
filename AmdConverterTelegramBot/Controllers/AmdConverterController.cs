@@ -40,6 +40,7 @@ public class AmdConverterController : ControllerBase
         long chatId = 0;
         int messageId = 0;
         string text = string.Empty;
+        string languageCode = "en";
         if (update.Type == UpdateType.Message)
         {
             chatId = update.Message.Chat.Id;
@@ -52,6 +53,7 @@ public class AmdConverterController : ControllerBase
             text = update.CallbackQuery.Data;
             chatId = update.CallbackQuery.Message.Chat.Id;
             messageId = update.CallbackQuery.Message.MessageId;
+            languageCode = update.CallbackQuery.From.LanguageCode ?? languageCode;
         }
 
         text = TelegramEscaper.Decode(text);
@@ -91,8 +93,9 @@ public class AmdConverterController : ControllerBase
                 var replyTitle = (money.Currency == conversion!.From?
                     $"{money} -> {conversion.To}" : $"{conversion.From} -> {money}") + 
                     $" ({(cash? "Cash" : "Non cash")})";
-                
-                string replyText = FormatTable(sortedValues, conversion.From == money.Currency? conversion.To : conversion.From, conversionInfo.Count());
+
+                CultureInfo cultureInfo = GetCultureInfo(languageCode);
+                string replyText = FormatTable(sortedValues, conversion.From == money.Currency? conversion.To : conversion.From, conversionInfo.Count(), cultureInfo);
                 
                 await botClient.SendTextMessageAsync(chatId, TelegramEscaper.EscapeString($"{replyTitle}{Environment.NewLine}```{replyText}```"), ParseMode.MarkdownV2);
             }
@@ -169,7 +172,7 @@ public class AmdConverterController : ControllerBase
         return Ok();
     }
 
-    private string FormatTable(IOrderedEnumerable<ConversionInfo> exchanges, Currency currency, int rowNumber)
+    private string FormatTable(IOrderedEnumerable<ConversionInfo> exchanges, Currency currency, int rowNumber, CultureInfo cultureInfo)
     {
         string[,] rowValues = new string[rowNumber, 3];
 
@@ -177,15 +180,31 @@ public class AmdConverterController : ControllerBase
         foreach (var conversionInfo in exchanges)
         {
             rowValues[i, 0] = conversionInfo.ExchangePoint.Name.Replace("Bank Armenia", "").Replace("Bank (Armenia)", "").Trim();
-            rowValues[i, 1] = conversionInfo.Rate != Rate.Unknown? conversionInfo.Rate.FXRate.ToString("0.##", CultureInfo.InvariantCulture) : "???";
+            rowValues[i, 1] = conversionInfo.Rate != Rate.Unknown? conversionInfo.Rate.FXRate.ToString("0.##", cultureInfo) : "???";
 
             var money = conversionInfo.FromMoney.Currency == currency
                 ? conversionInfo.FromMoney
                 : conversionInfo.ToMoney;
-            rowValues[i, 2] = conversionInfo.Rate != Rate.Unknown? money.Amount.ToString("0.##") + $"{currency.Symbol}" : "???";
+            rowValues[i, 2] = conversionInfo.Rate != Rate.Unknown? money.Amount.ToString("0.##", cultureInfo) + $"{currency.Symbol}" : "???";
             i++;
         }
 
         return MarkdownFormatter.FormatTable(new[] { "Bank", "Rate", exchanges.First().Conversion.ToString() }, rowValues);
+    }
+
+    private CultureInfo GetCultureInfo(string languageCode)
+    {
+        var cultures = new Dictionary<string, string>()
+        {
+            ["de"] = "de-DE",
+            ["en"] = "en-US",
+            ["es"] = "es-ES",
+            ["ru"] = "ru-RU",
+            
+        };
+
+        return cultures.TryGetValue(languageCode, out var cultureCode)
+            ? new CultureInfo(cultureCode)
+            : CultureInfo.InvariantCulture;
     }
 }
