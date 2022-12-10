@@ -1,19 +1,24 @@
 using System.Threading.Tasks;
 using AmdConverterTelegramBot.Entities;
 using AmdConverterTelegramBot.Services;
+using HtmlAgilityPack;
 using Xunit;
 
 namespace AmdConverterTelegramBotTests;
 
 public class MIRSiteParserTest
 {
+    private HtmlDocument GetHtmlDocument()
+    {
+        var webDocument = new HtmlWeb();
+        return webDocument.Load("https://mironline.ru/support/list/kursy_mir/");
+    }
+    
     [Fact]
-    public async Task Parse()
+    public void Parse()
     {
         // Act
-        var exchangePoint =
-            await new MirSiteParser().ParseAsync(
-                "https://mironline.ru/support/list/kursy_mir/");
+        var exchangePoint = new MirSiteParser().Parse(GetHtmlDocument());
             
         // Assert
         Assert.Equal("MIR", exchangePoint.Name);

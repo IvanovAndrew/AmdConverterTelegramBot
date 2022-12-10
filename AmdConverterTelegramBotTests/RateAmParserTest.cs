@@ -5,20 +5,27 @@ using System.Threading.Tasks;
 using AmdConverterTelegramBot;
 using AmdConverterTelegramBot.Entities;
 using AmdConverterTelegramBot.Services;
+using HtmlAgilityPack;
 using Xunit;
 
 namespace AmdConverterTelegramBotTests;
 
 public class RateAmParserTest
 {
+    private HtmlDocument GetHtmlDocument()
+    {
+        var web = new HtmlWeb();
+        return web.Load("https://rate.am/en/armenian-dram-exchange-rates/banks/non-cash");
+    }
+    
     [Fact]
-    public async Task RatesFromAmdIsHigherThanRatesFromAmd()
+    public void RatesFromAmdIsHigherThanRatesFromAmd()
     {
         var parser = new RateAmParser(
             new MoneyParser(new CurrencyParser(new Dictionary<string, string>()), "AMD"),
             new CultureInfo("en-us"));
 
-        var rates = await parser.ParseAsync("https://rate.am/en/armenian-dram-exchange-rates/banks/non-cash");
+        var rates = parser.Parse(GetHtmlDocument());
         
         Assert.True(rates.IsSuccess);
 

@@ -14,16 +14,14 @@ public class SasSiteParser
         _cultureInfo = cultureInfo;
     }
 
-    public async Task<ExchangePoint> ParseAsync(string url)
+    public ExchangePoint Parse(string html)
     {
-        if (string.IsNullOrEmpty(url)) throw new ArgumentException(nameof(url));
-        
-        var htmlDocument = await new HtmlWeb().LoadFromWebAsync(url);
+        var htmlDocument = new HtmlDocument();
+        htmlDocument.LoadHtml(html);
 
         return Parse(htmlDocument);
     }
-    
-    private ExchangePoint Parse(HtmlDocument htmlDocument)
+    public ExchangePoint Parse(HtmlDocument htmlDocument)
     {
         var exchangePoint = new ExchangePoint(){Name = "SAS", BaseCurrency = Currency.Amd};
         var table = htmlDocument.DocumentNode.SelectSingleNode("//div[@class='exchange-table']");

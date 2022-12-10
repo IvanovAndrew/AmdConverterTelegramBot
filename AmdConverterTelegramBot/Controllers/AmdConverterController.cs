@@ -18,17 +18,17 @@ public class AmdConverterController : ControllerBase
     private readonly ILogger _logger;
     private readonly TelegramBot _bot;
     private readonly IRequestParser _requestParser;
-    private readonly Parser _parser;
+    private readonly RateLoader _rateLoader;
     
     private readonly Replies _replies;
     
 
-    public AmdConverterController(ILogger<AmdConverterController> logger, TelegramBot bot, IRequestParser requestParser, Parser parser, Replies replies)
+    public AmdConverterController(ILogger<AmdConverterController> logger, TelegramBot bot, IRequestParser requestParser, RateLoader rateLoader, Replies replies)
     {
         _logger = logger;
         _bot = bot;
         _requestParser = requestParser;
-        _parser = parser;
+        _rateLoader = rateLoader;
         _replies = replies;
     }
     
@@ -68,7 +68,7 @@ public class AmdConverterController : ControllerBase
             
         else if (_requestParser.TryParseFullRequest(text, out var money, out var cash, out var conversion))
         {
-            var loadingResult = await (cash? _parser.LoadCashRates() : _parser.LoadNonCashRates());
+            var loadingResult = await (cash? _rateLoader.LoadCashRates() : _rateLoader.LoadNonCashRates());
             
             if (!loadingResult.IsSuccess)
             {

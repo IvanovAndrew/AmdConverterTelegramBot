@@ -34,7 +34,7 @@ public class Startup
         services.AddScoped<MirSiteParser>(s => ActivatorUtilities.CreateInstance<MirSiteParser>(s));
         services.AddScoped<RateAmParser>(s =>
             ActivatorUtilities.CreateInstance<RateAmParser>(s, s.GetRequiredService<IMoneyParser>(), cultureInfo));
-        services.AddScoped<Parser>(s => ActivatorUtilities.CreateInstance<Parser>(s, s.GetRequiredService<RateAmParser>()));
+        services.AddScoped<RateLoader>(s => ActivatorUtilities.CreateInstance<RateLoader>(s, s.GetRequiredService<RateAmParser>()));
         
         services.AddScoped<IRequestParser, RequestParser>(s => ActivatorUtilities.CreateInstance<RequestParser>(s, s.GetRequiredService<IMoneyParser>(), s.GetRequiredService<ICurrencyParser>(), _configuration.GetSection("Delimiters").Get<string[]>()));
         

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AmdConverterTelegramBot;
 using AmdConverterTelegramBot.Entities;
 using AmdConverterTelegramBot.Services;
+using HtmlAgilityPack;
 using Xunit;
 
 namespace AmdConverterTelegramBotTests
@@ -11,10 +12,10 @@ namespace AmdConverterTelegramBotTests
     public class SasParserTest
     {
         [Fact]
-        public async Task Parse()
+        public void Parse()
         {
             // Act
-            var exchangePoint = await Execute();
+            var exchangePoint = Execute();
             
             // Assert
             Assert.Equal("SAS", exchangePoint.Name);
@@ -29,10 +30,10 @@ namespace AmdConverterTelegramBotTests
 
         
         [Fact]
-        public async Task RatesFromAmdToUsdIsHigherThanRatesFromUsdToAmd()
+        public void RatesFromAmdToUsdIsHigherThanRatesFromUsdToAmd()
         {
             // Act
-            var exchangePoint = await Execute();
+            var exchangePoint = Execute();
         
             // Assert
             var amdToUsdConversion = new Conversion() { From = Currency.Amd, To = Currency.Usd };
@@ -42,10 +43,10 @@ namespace AmdConverterTelegramBotTests
         }
         
         [Fact]
-        public async Task RatesFromAmdToEurIsHigherThanRatesFromEurToAmd()
+        public void RatesFromAmdToEurIsHigherThanRatesFromEurToAmd()
         {
             // Act
-            var exchangePoint = await Execute();
+            var exchangePoint = Execute();
         
             // Assert
             var amdToEurConversion = new Conversion() { From = Currency.Amd, To = Currency.Eur };
@@ -55,10 +56,10 @@ namespace AmdConverterTelegramBotTests
         }
         
         [Fact]
-        public async Task RatesFromAmdToRurIsHigherThanRatesFromRurToAmd()
+        public void RatesFromAmdToRurIsHigherThanRatesFromRurToAmd()
         {
             // Act
-            var exchangePoint = await Execute();
+            var exchangePoint = Execute();
         
             // Assert
             var amdToRurConversion = new Conversion() { From = Currency.Amd, To = Currency.Rur };
@@ -67,12 +68,14 @@ namespace AmdConverterTelegramBotTests
             Assert.True(exchangePoint.Rates[amdToRurConversion].FXRate > exchangePoint.Rates[rurToAmdConversion].FXRate);
         }
         
-        private async Task<ExchangePoint> Execute()
+        private ExchangePoint Execute()
         {
-            var exchangePoint =
-                await new SasSiteParser(new CurrencyParser(new Dictionary<string, string>()), CultureInfo.InvariantCulture)
-                    .ParseAsync(
-                        "https://www.sas.am/food/en/");
+            var parser = new SasSiteParser(new CurrencyParser(new Dictionary<string, string>()),
+                CultureInfo.InvariantCulture);
+
+            var htmlDoc = new HtmlWeb().Load("https://www.sas.am/food/en/");
+
+            var exchangePoint = parser.Parse(htmlDoc);
             return exchangePoint;
         }
     }

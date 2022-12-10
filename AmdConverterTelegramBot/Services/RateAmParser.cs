@@ -17,16 +17,18 @@ namespace AmdConverterTelegramBot.Services
             _moneyParser = moneyParser?? throw new ArgumentNullException(nameof(moneyParser));
             _cultureInfo = cultureInfo?? throw new ArgumentNullException(nameof(cultureInfo));
         }
-        
-        public async Task<Result<List<ExchangePoint>>> ParseAsync(string url)
+
+        public Result<List<ExchangePoint>> Parse(string html)
+        {
+            var htmlDocument = new HtmlDocument();
+            htmlDocument.LoadHtml(html);
+
+            return Parse(htmlDocument);
+        }
+
+        public Result<List<ExchangePoint>> Parse(HtmlDocument webPage)
         {
             List<ExchangePoint> result = new();
-            HtmlWeb html = new HtmlWeb();
-            var webPage = await html.LoadFromWebAsync(url);
-            if (webPage == null)
-            {
-                return Result<List<ExchangePoint>>.Error($"{url} is unavailable");
-            }
 
             var table = webPage.DocumentNode.SelectSingleNode("//table[@id='rb']");
 

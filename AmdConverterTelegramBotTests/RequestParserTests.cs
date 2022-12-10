@@ -25,6 +25,7 @@ public class RequestParserTests
             ["euro"] = "EUR",
             ["евро"] = "EUR",
             ["rur"] = "RUR",
+            ["rub"] = "RUR",
             ["рубль"] = "RUR",
             ["рублях"] = "RUR",
         });
@@ -40,6 +41,7 @@ public class RequestParserTests
     [InlineData("non cash 1 000amd в рубль", 1000, "AMD", "AMD", "RUR", false)]
     [InlineData("cash 1 000.00amd -> ₽", 1000, "AMD", "AMD", "RUR", true)]
     [InlineData("non cash USD->1000֏", 1000, "AMD", "USD", "AMD", false)]
+    [InlineData("cash AMD->1000RUB", 1000, "RUR", "AMD", "RUR", true)]
     public void ParseInput(string text, decimal amount, string moneyCurrency, string currencyFrom, string currencyTo, bool? expectedCash)
     {
         var parser = CreateRequestParser();
