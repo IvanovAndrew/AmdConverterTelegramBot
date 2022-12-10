@@ -67,13 +67,13 @@ public class RateLoader
         string rateAmHtml, mirHtml;
         using (HttpClient httpClient = new HttpClient())
         {
-            rateAmHtml = await httpClient.GetStringAsync(_rateSources.RateamNonCashUrl);
-            mirHtml = await httpClient.GetStringAsync(_rateSources.MirUrl);
+            rateAmHtml = await GetStringAsync(httpClient, _rateSources.RateamNonCashUrl);
+            mirHtml = await GetStringAsync(httpClient, _rateSources.MirUrl);
         }
         
         var rates = _rateAmParser.Parse(rateAmHtml);
 
-        if (rates.IsSuccess)
+        if (rates.IsSuccess && mirHtml != String.Empty)
         {
             var mirRates = _mirSiteParser.Parse(mirHtml);
             rates.Value.Add(mirRates);
