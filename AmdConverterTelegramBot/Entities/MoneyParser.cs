@@ -14,7 +14,7 @@ public class MoneyParser : IMoneyParser
         _defaultCurrency = defaultCurrency;
     }
         
-    public bool TryParse(string? text, out Money money)
+    public bool TryParse(string text, out Money money)
     {
         money = new Money();
             
@@ -26,8 +26,9 @@ public class MoneyParser : IMoneyParser
         if (!match.Success) return false;
     
         var numberPart = match.Groups[0].Value;
+        var position = text.IndexOf(numberPart);
     
-        if (!_currencyParser.TryParse(str.Replace(numberPart, ""), out var currency))
+        if (!_currencyParser.TryParse(str.Substring(position).Replace(numberPart, ""), out var currency))
         {
             if (!_currencyParser.TryParse(_defaultCurrency, out currency))
                 return false;
