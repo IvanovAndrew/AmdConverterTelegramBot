@@ -35,9 +35,13 @@ public class RequestParser : IRequestParser
         var lowerCaseText = (text?? "").ToLowerInvariant();
         if (TryParseCash(lowerCaseText, out cash))
         {
-            var parts = lowerCaseText.Replace("non cash", "").Replace("cash", "");
+            var parts = lowerCaseText.Replace("non cash", "").Replace("cash", "").Split(_delimiters, StringSplitOptions.None);
 
-            if (_moneyParser.TryParse(parts, out money))
+            if (_moneyParser.TryParse(parts[0], out money))
+            {
+                return true;
+            }
+            else if (parts.Length > 1 && _moneyParser.TryParse(parts[1], out money))
             {
                 return true;
             }
