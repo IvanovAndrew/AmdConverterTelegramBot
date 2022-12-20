@@ -34,7 +34,7 @@ public class RequestParserTests
     }
     
     [Theory]
-    [InlineData("Non Cash 1 000 000 amd to €", 1000000, "AMD", "AMD", "EUR", false)]
+    [InlineData("Non Cash 1 000 000 amd to €", 1_000_000, "AMD", "AMD", "EUR", false)]
     [InlineData("Cash 100 AMD в рублях", 100, "AMD", "AMD", "RUR", true)]
     [InlineData("Non cash 1000 amd non cash -> RUR", 1000, "AMD", "AMD", "RUR", false)]
     [InlineData("Cash 1000amd in RUR", 1000, "AMD", "AMD", "RUR", true)]
@@ -42,7 +42,8 @@ public class RequestParserTests
     [InlineData("cash 1 000.00amd -> ₽", 1000, "AMD", "AMD", "RUR", true)]
     [InlineData("non cash USD->1000֏", 1000, "AMD", "USD", "AMD", false)]
     [InlineData("cash AMD->1000RUB", 1000, "RUR", "AMD", "RUR", true)]
-    public void ParseInput(string text, decimal amount, string moneyCurrency, string currencyFrom, string currencyTo, bool? expectedCash)
+    [InlineData("non cash 15000₽->AMD", 15_000, "RUR", "RUR", "AMD", false)]
+    public void ParseInput(string text, decimal amount, string moneyCurrency, string currencyFrom, string currencyTo, bool expectedCash)
     {
         var parser = CreateRequestParser();
         Assert.True(parser.TryParseFullRequest(text, out Money money, out bool cash, out Conversion conversion));
