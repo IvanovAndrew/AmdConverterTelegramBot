@@ -36,13 +36,19 @@ public class RateLoader
             if (sasHtml != string.Empty)
             {
                 var sasRates = _sasSiteParser.Parse(sasHtml);
-                bankRates.Value.Add(sasRates);
+                if (sasRates.IsSuccess)
+                {
+                    bankRates.Value.Add(sasRates.Value);
+                }
             }
 
             if (mirHtml != string.Empty)
             {
                 var mirRates = _mirSiteParser.Parse(mirHtml);
-                bankRates.Value.Add(mirRates);
+                if (mirRates.IsSuccess)
+                {
+                    bankRates.Value.Add(mirRates.Value);
+                }
             }
         }
 
@@ -76,7 +82,10 @@ public class RateLoader
         if (rates.IsSuccess && mirHtml != String.Empty)
         {
             var mirRates = _mirSiteParser.Parse(mirHtml);
-            rates.Value.Add(mirRates);
+            if (mirRates.IsSuccess)
+            {
+                rates.Value.Add(mirRates.Value);
+            }
         }
 
         return rates;

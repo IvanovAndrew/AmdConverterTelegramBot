@@ -4,24 +4,15 @@ using HtmlAgilityPack;
 
 namespace AmdConverterTelegramBot.Services;
 
-public class SasSiteParser
+public class SasSiteParser : SiteParserBase
 {
     private readonly ICurrencyParser _currencyParser;
-    private readonly CultureInfo _cultureInfo;
-    public SasSiteParser(ICurrencyParser currencyParser, CultureInfo cultureInfo)
+    public SasSiteParser(ICurrencyParser currencyParser, CultureInfo cultureInfo) : base(cultureInfo)
     {
         _currencyParser = currencyParser?? throw new ArgumentNullException(nameof(currencyParser));
-        _cultureInfo = cultureInfo;
     }
 
-    public ExchangePoint Parse(string html)
-    {
-        var htmlDocument = new HtmlDocument();
-        htmlDocument.LoadHtml(html);
-
-        return Parse(htmlDocument);
-    }
-    public ExchangePoint Parse(HtmlDocument htmlDocument)
+    public override ExchangePoint Parse(HtmlDocument htmlDocument)
     {
         var exchangePoint = new ExchangePoint(){Name = "SAS", BaseCurrency = Currency.Amd};
         var table = htmlDocument.DocumentNode.SelectSingleNode("//div[@class='exchange-table']");
@@ -42,6 +33,4 @@ public class SasSiteParser
         
         return exchangePoint;
     }
-
-    private decimal ParseRate(string s) => decimal.Parse(s, _cultureInfo);
 }
