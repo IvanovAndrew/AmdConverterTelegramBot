@@ -63,12 +63,12 @@ public class AmdConverterController : ControllerBase
         
         if (text == "/start")
         {
-            await botClient.SendTextMessageAsync(chatId, "Hello! Enter the price in AMD, USD, EUR, or RUB");
+            await botClient.SendTextMessageAsync(chatId, "Hello! Enter the price in AMD, USD, EUR, GEL, or RUB");
         }
             
         else if (_requestParser.TryParseFullRequest(text, out var money, out var cash, out var conversion))
         {
-            var loadingResult = await (cash? _rateLoader.LoadCashRates() : _rateLoader.LoadNonCashRates());
+            var loadingResult = await _rateLoader.LoadRates(cash);
             
             if (!loadingResult.IsSuccess)
             {
@@ -107,7 +107,8 @@ public class AmdConverterController : ControllerBase
             InlineKeyboardMarkup inlineKeyboard;
             if (money.Currency == Currency.Amd)
             {
-                var availableCurrencies = new[] { Currency.Eur, Currency.Usd, Currency.Rur };
+                // TODO take values by reflection or from appsettings
+                var availableCurrencies = new[] { Currency.Eur, Currency.Usd, Currency.Rur, Currency.GEL };
                 inlineKeyboard = new InlineKeyboardMarkup
                 (
                     new []
@@ -115,12 +116,12 @@ public class AmdConverterController : ControllerBase
                         availableCurrencies
                             .Select(c =>
                                 InlineKeyboardButton.WithCallbackData(
-                                    text: $"{money.Currency.Name} -> {c.Name}",
+                                    text: $"{money.Currency.Name}->{c.Name}",
                                     callbackData: $"{cashString} {moneyAsString}->{c.Name}")).ToArray(),
                         availableCurrencies
                             .Select(c =>
                                 InlineKeyboardButton.WithCallbackData(
-                                    text: $"{c.Name} -> {money.Currency.Name}",
+                                    text: $"{c.Name}->{money.Currency.Name}",
                                     callbackData: $"{cashString} {c.Name}->{moneyAsString}"))
                     }
                 );

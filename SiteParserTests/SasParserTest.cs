@@ -1,13 +1,11 @@
-using System.Collections.Generic;
 using System.Globalization;
-using System.Threading.Tasks;
 using AmdConverterTelegramBot;
 using AmdConverterTelegramBot.Entities;
-using AmdConverterTelegramBot.Services;
+using AmdConverterTelegramBot.SiteParser;
 using HtmlAgilityPack;
 using Xunit;
 
-namespace AmdConverterTelegramBotTests
+namespace SiteParsersTests
 {
     public class SasParserTest
     {
@@ -75,8 +73,8 @@ namespace AmdConverterTelegramBotTests
 
             var htmlDoc = new HtmlWeb().Load("https://www.sas.am/food/en/");
 
-            var exchangePoint = parser.Parse(htmlDoc);
-            return exchangePoint;
+            var exchangePoint = parser.Parse(htmlDoc.ParsedText, true);
+            return exchangePoint.Value;
         }
     }
 }

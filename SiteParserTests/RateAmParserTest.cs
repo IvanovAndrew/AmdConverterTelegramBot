@@ -1,14 +1,11 @@
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Threading.Tasks;
 using AmdConverterTelegramBot;
 using AmdConverterTelegramBot.Entities;
 using AmdConverterTelegramBot.Services;
 using HtmlAgilityPack;
 using Xunit;
 
-namespace AmdConverterTelegramBotTests;
+namespace SiteParsersTests;
 
 public class RateAmParserTest
 {

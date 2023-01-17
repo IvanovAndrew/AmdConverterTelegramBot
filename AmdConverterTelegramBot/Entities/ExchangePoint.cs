@@ -1,9 +1,12 @@
+using System.Collections.ObjectModel;
+
 namespace AmdConverterTelegramBot.Entities;
 
 public class ExchangePoint
 {
     public string Name { get; init; }
-    public Dictionary<Conversion, Rate> Rates { get; } = new();
+    private readonly Dictionary<Conversion, Rate> _ratesDict = new();
+    public ReadOnlyDictionary<Conversion, Rate> Rates { get; private set; }
     public Currency BaseCurrency { get; init; }
 
     public ConversionInfo? Convert(Conversion conversion, Money money)
@@ -36,6 +39,14 @@ public class ExchangePoint
 
         return null;
     }
-    
-    public void AddRate(Conversion conversion, Rate rate) => Rates[conversion] = rate;
+
+    public void AddRate(Conversion conversion, Rate rate)
+    {
+        if (conversion.From == conversion.To) return;
+        
+        if (_ratesDict.ContainsKey(conversion))
+            throw new ArgumentException($"Conversion {conversion} is already added");
+        _ratesDict[conversion] = rate;
+        Rates = new ReadOnlyDictionary<Conversion, Rate>(_ratesDict);
+    }
 }
