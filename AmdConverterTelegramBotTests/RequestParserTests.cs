@@ -44,7 +44,7 @@ public class RequestParserTests
     [InlineData("non cash USD->1000֏", 1000, "AMD", "USD", "AMD", false)]
     [InlineData("cash AMD->1000RUB", 1000, "RUR", "AMD", "RUR", true)]
     [InlineData("non cash 15000₽->AMD", 15_000, "RUR", "RUR", "AMD", false)]
-    [InlineData("non cash 15000 GEL -> AMD", 15_000, "GEL", "GEL", "AMD", false)]
+    [InlineData("Non cash 10ლ -> AMD", 10, "GEL", "GEL", "AMD", false)]
     [InlineData("cash GEL -> 15000 AMD", 15_000, "AMD", "GEL", "AMD", true)]
     public void ParseInput(string text, decimal amount, string moneyCurrency, string currencyFrom, string currencyTo, bool expectedCash)
     {

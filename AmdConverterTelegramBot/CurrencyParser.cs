@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using AmdConverterTelegramBot.Entities;
 
 namespace AmdConverterTelegramBot;
@@ -19,9 +18,23 @@ public class CurrencyParser : ICurrencyParser
     
     public bool TryParse(string text, out Currency currency)
     {
-        var currencies = Currency.GetAvailableCurrencies().ToDictionary(c => c.Name);
+        var availableCurrencies = Currency.GetAvailableCurrencies();
+        var currencies = availableCurrencies.ToDictionary(c => c.Name);
         
         var str = text.Trim().ToUpperInvariant();
+        
+        if (currencies.TryGetValue(str, out currency))
+        {
+            return true;
+        }
+        
+        currency = availableCurrencies.FirstOrDefault(c => string.Equals(c.Symbol, str, StringComparison.InvariantCultureIgnoreCase));
+
+        if (currency != null)
+        {
+            return true;
+        }
+        
         foreach (var (word, currencyName) in _synonyms)
         {
             if (str == word.ToUpperInvariant())
@@ -31,15 +44,8 @@ public class CurrencyParser : ICurrencyParser
             }
         }
         
-        if (currencies.TryGetValue(str, out currency))
-        {
-            return true;
-        }
-
-        currency = Currency.GetAvailableCurrencies().FirstOrDefault(c => c.Symbol == str);
-        var result = currency != null;
         currency ??= Currency.Amd;
         
-        return result;
+        return false;
     }
 }
