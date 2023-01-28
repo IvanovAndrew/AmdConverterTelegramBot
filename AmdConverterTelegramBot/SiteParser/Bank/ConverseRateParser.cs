@@ -13,7 +13,7 @@ class ConverseRateParser : HtmlTableParserBase
 
     protected override HtmlNode SelectTableNode(HtmlDocument htmlDocument, bool cash)
     {
-        return htmlDocument.DocumentNode.SelectNodes(@"//table").Last();
+        return htmlDocument.DocumentNode.SelectNodes(@"//table")[3];
     }
 
     protected override int BuyIndex(bool cash) => cash ? 3 : 5;
