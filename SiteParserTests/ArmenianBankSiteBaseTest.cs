@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net.Http.Headers;
 using AmdConverterTelegramBot;
 using AmdConverterTelegramBot.Entities;
 using AmdConverterTelegramBot.SiteParser;
@@ -85,6 +86,7 @@ public abstract class ArmenianBankSiteBaseTest
         using (HttpClient httpClient = new HttpClient(new HttpClientHandler{AllowAutoRedirect = true, MaxAutomaticRedirections = 2}))
         {
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "Other");
             var response = httpClient.Send(request);
             response.EnsureSuccessStatusCode();
 

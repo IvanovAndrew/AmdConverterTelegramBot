@@ -5,7 +5,6 @@ using AmdConverterTelegramBot.SiteParser.Bank;
 
 namespace SiteParsersTests;
 
-// TODO implement parser and uncomment test
 public class AmeriabankRateParserTest : ArmenianBankSiteBaseTest
 {
     protected override string BankName => "Ameriabank";

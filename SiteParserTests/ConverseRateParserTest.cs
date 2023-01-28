@@ -5,13 +5,12 @@ using AmdConverterTelegramBot.SiteParser.Bank;
 
 namespace SiteParsersTests;
 
-// TODO fix parser and uncomment test
-// public class ConverseRateParserTest : ArmenianBankSiteBaseTest
-// {
-//     protected override string BankName => "Converse bank";
-//     protected override string Site => "https://www.conversebank.am/en/exchange-rate";
-//     protected override HtmlParserBase CreateParser(ICurrencyParser currencyParser, CultureInfo cultureInfo)
-//     {
-//         return new ConverseRateParser(currencyParser, cultureInfo);
-//     }
-// }
+public class ConverseRateParserTest : ArmenianBankSiteBaseTest
+{
+    protected override string BankName => "Converse bank";
+    protected override string Site => "https://www.conversebank.am/en/exchange-rate/";
+    protected override HtmlParserBase CreateParser(ICurrencyParser currencyParser, CultureInfo cultureInfo)
+    {
+        return new ConverseRateParser(currencyParser, cultureInfo);
+    }
+}

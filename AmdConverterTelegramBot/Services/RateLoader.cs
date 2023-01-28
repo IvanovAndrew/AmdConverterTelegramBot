@@ -25,6 +25,7 @@ public class RateLoader
         Task<Result<List<ExchangePoint>>> rateAmTask, ratesFromBankSites;
         using (HttpClient httpClient = new HttpClient(new HttpClientHandler{AllowAutoRedirect = true, MaxAutomaticRedirections = 2}))
         {
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "Other");
             rateAmTask = RatesFromRateAm(httpClient);
             ratesFromBankSites = RatesFromSites(httpClient, cash);
             
