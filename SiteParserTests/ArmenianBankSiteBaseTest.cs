@@ -82,7 +82,7 @@ public abstract class ArmenianBankSiteBaseTest
 
     protected virtual string GetString(string uri)
     {
-        using (HttpClient httpClient = new HttpClient())
+        using (HttpClient httpClient = new HttpClient(new HttpClientHandler{AllowAutoRedirect = true, MaxAutomaticRedirections = 2}))
         {
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
             var response = httpClient.Send(request);

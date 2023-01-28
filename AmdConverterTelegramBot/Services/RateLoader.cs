@@ -23,7 +23,7 @@ public class RateLoader
     public async Task<Result<List<ExchangePoint>>> LoadRates(bool cash)
     {
         Task<Result<List<ExchangePoint>>> rateAmTask, ratesFromBankSites;
-        using (HttpClient httpClient = new HttpClient())
+        using (HttpClient httpClient = new HttpClient(new HttpClientHandler{AllowAutoRedirect = true, MaxAutomaticRedirections = 2}))
         {
             rateAmTask = RatesFromRateAm(httpClient);
             ratesFromBankSites = RatesFromSites(httpClient, cash);
