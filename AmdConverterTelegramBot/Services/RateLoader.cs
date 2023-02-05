@@ -57,9 +57,9 @@ public class RateLoader
         return result.Any()? Result<List<ExchangePoint>>.Ok(result.Values.ToList()) : Result<List<ExchangePoint>>.Error("Couldn't get any data");
     }
 
-    private async Task<Result<List<ExchangePoint>>> RatesFromRateAm(HttpClient httpClient)
+    private async Task<Result<List<ExchangePoint>>> RatesFromRateAm(HttpClient httpClient, bool cash)
     {
-        var rateAmHtml = await GetStringAsync(httpClient, _rateSources.RateamCashUrl);
+        var rateAmHtml = await GetStringAsync(httpClient, cash? _rateSources.RateamCashUrl : _rateSources.RateamNonCashUrl);
         return _rateAmParser.Parse(rateAmHtml);
     }
 
