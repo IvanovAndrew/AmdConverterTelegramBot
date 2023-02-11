@@ -152,6 +152,16 @@ public class AmdConverterController : ControllerBase
                 });
             await botClient.SendTextMessageAsync(chatId, text:"Cash?", replyMarkup: inlineKeyboard);
         }
+        else if (_requestParser.TryParseAmount(text, out var amount))
+        {
+            var availableCurrencies = Currency.GetAvailableCurrencies();
+            var inlineKeyboard = new InlineKeyboardMarkup(
+                availableCurrencies.Select
+                (
+                    currency => InlineKeyboardButton.WithCallbackData(text: currency.Name, callbackData:$"{amount}{currency.Symbol}") 
+                ).Chunk(3));
+            await botClient.SendTextMessageAsync(chatId, text:"Select currency", replyMarkup: inlineKeyboard);
+        }
         else if (_replies.Dialogues.Any(a => a.Message.Contains(text)))
         {
             var a = _replies.Dialogues.First(a => a.Message.Contains(text));
@@ -201,7 +211,6 @@ public class AmdConverterController : ControllerBase
             ["en"] = "en-US",
             ["es"] = "es-ES",
             ["ru"] = "ru-RU",
-            
         };
 
         return cultures.TryGetValue(languageCode, out var cultureCode)

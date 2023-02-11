@@ -5,6 +5,7 @@ namespace AmdConverterTelegramBot;
 
 public interface IRequestParser
 {
+    bool TryParseAmount(string? text, out decimal amount);
     bool TryParseMoney(string? text, out Money money);
     bool TryParseMoneyAndCash(string? text, out Money money, out bool cash);
     bool TryParseFullRequest(string? text, out Money money, out bool cash, out Conversion conversion);
@@ -23,9 +24,14 @@ public class RequestParser : IRequestParser
         _delimiters = delimiters;
     }
 
+    public bool TryParseAmount(string? text, out decimal amount)
+    {
+        return decimal.TryParse(text, out amount);
+    }
+    
     public bool TryParseMoney(string? text, out Money money)
     {
-        return _moneyParser.TryParse(text, out money);
+        return _moneyParser.TryParse(text?? string.Empty, out money);
     }
 
     public bool TryParseMoneyAndCash(string? text, out Money money, out bool cash)
