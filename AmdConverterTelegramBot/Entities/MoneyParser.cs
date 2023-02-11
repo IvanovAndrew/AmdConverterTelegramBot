@@ -6,17 +6,17 @@ namespace AmdConverterTelegramBot.Entities;
 public class MoneyParser : IMoneyParser
 {
     private readonly ICurrencyParser _currencyParser;
-    private readonly string? _defaultCurrency;
     
-    public MoneyParser(ICurrencyParser currencyParser, string? defaultCurrency)
+    public MoneyParser(ICurrencyParser currencyParser)
     {
         _currencyParser = currencyParser;
-        _defaultCurrency = defaultCurrency;
     }
         
-    public bool TryParse(string text, out Money money)
+    public bool TryParse(string? text, out Money money)
     {
         money = new Money();
+
+        if (text == null) return false;
             
         Regex amountRegex = new Regex(@"((\d+\s?)+\.?\d*)");
     
@@ -30,8 +30,7 @@ public class MoneyParser : IMoneyParser
     
         if (!_currencyParser.TryParse(str.Substring(position).Replace(numberPart, ""), out var currency))
         {
-            if (!_currencyParser.TryParse(_defaultCurrency, out currency))
-                return false;
+            return false;
         }
     
         NumberFormatInfo numberFormatInfo = new NumberFormatInfo

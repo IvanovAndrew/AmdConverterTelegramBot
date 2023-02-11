@@ -19,7 +19,7 @@ public class RateAmParserTest
     public void RatesFromAmdIsHigherThanRatesFromAmd()
     {
         var parser = new RateAmParser(
-            new MoneyParser(new CurrencyParser(new Dictionary<string, string>()), "AMD"),
+            new MoneyParser(new CurrencyParser(new Dictionary<string, string>())),
             new CultureInfo("en-us"));
 
         var rates = parser.Parse(GetHtmlDocument());

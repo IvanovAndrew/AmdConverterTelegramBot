@@ -30,7 +30,7 @@ public class RequestParserTests
             ["рублях"] = "RUR",
             ["лари"] = "GEL"
         });
-        return new RequestParser(new MoneyParser(currencyParser, "AMD"), currencyParser,
+        return new RequestParser(new MoneyParser(currencyParser), currencyParser,
             new[] { "в ", "->", " in ", " as ", " to " });
     }
     

@@ -32,7 +32,7 @@ public class Startup
         services.AddSingleton<RateSources>();
         
         services.AddSingleton<ICurrencyParser, CurrencyParser>(s => ActivatorUtilities.CreateInstance<CurrencyParser>(s, _configuration.GetSection("CurrencySynonyms").GetChildren().ToDictionary(x => x.Key, x => x.Value)));
-        services.AddSingleton<IMoneyParser, MoneyParser>(s => ActivatorUtilities.CreateInstance<MoneyParser>(s, s.GetRequiredService<ICurrencyParser>(), _configuration["DefaultCurrency"]));
+        services.AddSingleton<IMoneyParser, MoneyParser>(s => ActivatorUtilities.CreateInstance<MoneyParser>(s, s.GetRequiredService<ICurrencyParser>()));
         services.AddSingleton<IBankParserFactory, BankParserFactory>(s => ActivatorUtilities.CreateInstance<BankParserFactory>(s, s.GetRequiredService<ICurrencyParser>(), cultureInfo));
         
         services.AddScoped<RateAmParser>(s =>

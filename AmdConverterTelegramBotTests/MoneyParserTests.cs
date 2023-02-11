@@ -19,7 +19,7 @@ public class MoneyParserTests
             ["грузинский лари"] = "GEL",
             ["грузинских лари"] = "GEL"
         });
-        return new MoneyParser(currencyParser, "AMD");
+        return new MoneyParser(currencyParser);
     }
     
     [Theory]
