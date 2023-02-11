@@ -1,7 +1,5 @@
-using System.Globalization;
 using AmdConverterTelegramBot.Entities;
 using AmdConverterTelegramBot.SiteParser;
-using AmdConverterTelegramBot.SiteParser.Bank;
 
 namespace AmdConverterTelegramBot.Services;
 
@@ -12,12 +10,12 @@ public class RateLoader
     private readonly RateSources _rateSources;
     private readonly ILogger _logger;
 
-    public RateLoader(IBankParserFactory parserFactory, RateAmParser rateAmParser, RateSources rateSources)
+    public RateLoader(IBankParserFactory parserFactory, RateAmParser rateAmParser, RateSources rateSources, ILogger logger)
     {
         _parserFactory = parserFactory ?? throw new ArgumentNullException(nameof(parserFactory));
         _rateAmParser = rateAmParser ?? throw new ArgumentNullException(nameof(rateAmParser));
         _rateSources = rateSources ?? throw new ArgumentNullException(nameof(rateSources));
-        // _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<Result<List<ExchangePoint>>> LoadRates(bool cash)
@@ -26,14 +24,14 @@ public class RateLoader
         using (HttpClient httpClient = new HttpClient(new HttpClientHandler{AllowAutoRedirect = true, MaxAutomaticRedirections = 2}))
         {
             httpClient.DefaultRequestHeaders.Add("User-Agent", "Other");
-            rateAmTask = RatesFromRateAm(httpClient);
+            rateAmTask = RatesFromRateAm(httpClient, cash);
             ratesFromBankSites = RatesFromSites(httpClient, cash);
             
             await Task.WhenAll(rateAmTask, ratesFromBankSites);
         }
 
-        var rateAmRates = rateAmTask.Result.IsSuccess? rateAmTask.Result.Value : new List<ExchangePoint>();
-        var bankRates = ratesFromBankSites.Result.IsSuccess? ratesFromBankSites.Result.Value : new List<ExchangePoint>();
+        var rateAmRates = rateAmTask.Result.ValueOrDefault(new List<ExchangePoint>());
+        var bankRates = ratesFromBankSites.Result.ValueOrDefault(new List<ExchangePoint>());
 
         var result = new Dictionary<string, ExchangePoint>(StringComparer.InvariantCultureIgnoreCase);
         foreach (var exchangePoint in rateAmRates.Union(bankRates))
@@ -60,7 +58,8 @@ public class RateLoader
     private async Task<Result<List<ExchangePoint>>> RatesFromRateAm(HttpClient httpClient, bool cash)
     {
         var rateAmHtml = await GetStringAsync(httpClient, cash? _rateSources.RateamCashUrl : _rateSources.RateamNonCashUrl);
-        return _rateAmParser.Parse(rateAmHtml);
+        
+        return rateAmHtml.Bind(html => _rateAmParser.Parse(html));
     }
 
     private async Task<Result<List<ExchangePoint>>> RatesFromSites(HttpClient httpClient, bool cash)
@@ -87,29 +86,24 @@ public class RateLoader
         foreach (var task in tasks)
         {
             var result = task.Result;
-            if (result.IsSuccess)
-            {
-                exchangePoints.Add(result.Value);
-            }
-            else
-            {
-                errors.Add(result.ErrorMessage);
-            }
+            result.IterValue(value => exchangePoints.Add(value));
+            result.IterError(error => errors.Add(error));
         }
 
         return exchangePoints.Any()? Result<List<ExchangePoint>>.Ok(exchangePoints) : Result<List<ExchangePoint>>.Error(string.Join(Environment.NewLine, errors));
     }
 
-    private async Task<string> GetStringAsync(HttpClient httpClient, string url)
+    private async Task<Result<string>> GetStringAsync(HttpClient httpClient, string url)
     {
         try
         {
-            return await httpClient.GetStringAsync(url);
+            var result = await httpClient.GetStringAsync(url);
+            return Result<string>.Ok(result);
         }
         catch(Exception e)
         {
-            return await Task.FromResult("");
-            // _logger.LogError($"Couldn't parse {url}", e);
+            _logger.LogError($"Couldn't parse {url}", e);
+            return Result<string>.Error($"Couldn't parse {url}");
         }
     }
 
@@ -117,7 +111,7 @@ public class RateLoader
     {
         var source = await GetStringAsync(httpClient, url);
 
-        return LoadRate(bank, source, cash);
+        return source.Bind(html => LoadRate(bank, html, cash));
     }
     
     private Result<ExchangePoint> LoadRate(string bank, string source, bool cash)
@@ -130,10 +124,12 @@ public class RateLoader
             }
             catch (Exception e)
             {
+                _logger.LogError($"An error occured during parsing {bank}: {e}");
                 return Result<ExchangePoint>.Error($"An error occured during parsing {bank}: {e}");
             }
         }
         
+        _logger.LogDebug($"Parser for {bank} is not found");
         return Result<ExchangePoint>.Error($"Parser for {bank} is not found");
     }
 }

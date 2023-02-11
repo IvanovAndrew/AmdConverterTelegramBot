@@ -16,4 +16,31 @@ public class Result<T>
         return new Result<T>() { IsSuccess = false, ErrorMessage = message };
     }
 
+    public Result<T2> Bind<T2>(Func<T, Result<T2>> bind)
+    {
+        return IsSuccess?
+            bind(Value) :
+            Result<T2>.Error(ErrorMessage);
+    }
+
+    public void IterValue(Action<T> action)
+    {
+        if (IsSuccess)
+        {
+            action(Value);
+        }
+    }
+    
+    public void IterError(Action<string> action)
+    {
+        if (!IsSuccess)
+        {
+            action(ErrorMessage);
+        }
+    }
+
+    public T ValueOrDefault(T defaultValue)
+    {
+        return IsSuccess ? Value : defaultValue;
+    }
 }

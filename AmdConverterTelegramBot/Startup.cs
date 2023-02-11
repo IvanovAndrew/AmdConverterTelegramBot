@@ -17,7 +17,10 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
+        services.AddLogging();
+        
         var builder = services.AddControllers().AddNewtonsoftJson();
+        
         
         var cultureInfo = new CultureInfo(_configuration["CultureInfo"]);
         
@@ -34,7 +37,11 @@ public class Startup
         
         services.AddScoped<RateAmParser>(s =>
             ActivatorUtilities.CreateInstance<RateAmParser>(s, s.GetRequiredService<IMoneyParser>(), cultureInfo));
-        services.AddScoped<RateLoader>(s => ActivatorUtilities.CreateInstance<RateLoader>(s, s.GetRequiredService<IBankParserFactory>(), s.GetRequiredService<RateAmParser>(), s.GetRequiredService<RateSources>()));
+        services.AddScoped<RateLoader>(s => ActivatorUtilities.CreateInstance<RateLoader>(s, 
+            s.GetRequiredService<IBankParserFactory>(), 
+            s.GetRequiredService<RateAmParser>(), 
+            s.GetRequiredService<RateSources>(),
+            s.GetService<ILoggerFactory>().CreateLogger<RateLoader>()));
         
         services.AddScoped<IRequestParser, RequestParser>(s => ActivatorUtilities.CreateInstance<RequestParser>(s, s.GetRequiredService<IMoneyParser>(), s.GetRequiredService<ICurrencyParser>(), _configuration.GetSection("Delimiters").Get<string[]>()));
         
