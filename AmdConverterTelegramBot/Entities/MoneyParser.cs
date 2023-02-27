@@ -28,7 +28,7 @@ public class MoneyParser : IMoneyParser
         var numberPart = match.Groups[0].Value;
         var position = text.IndexOf(numberPart);
     
-        if (!_currencyParser.TryParse(str.Substring(position).Replace(numberPart, ""), out var currency))
+        if (!_currencyParser.TryParse(str.Replace(numberPart, ""), out var currency))
         {
             return false;
         }
