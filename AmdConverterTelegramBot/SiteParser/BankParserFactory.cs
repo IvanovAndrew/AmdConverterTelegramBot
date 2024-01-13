@@ -48,7 +48,7 @@ public class BankParserFactory : IBankParserFactory
                 ["Ameriabank"] = new AmeriabankRatesParser(_currencyParser, _cultureInfo),
                 ["Araratbank"] = new AraratbankRateParser(_currencyParser, _cultureInfo),
                 ["Ardshinbank"] = new ArdshinbankSiteParser(_currencyParser, _cultureInfo),
-                ["ArmBusinessBank"] = new ArmbusinessbankRateParser(_currencyParser, _cultureInfo),
+                ["Amiobank"] = new AmioBankRateParser(_currencyParser, _cultureInfo),
                 ["ARMECONOMBANK"] = new ArmeconombankRateParser(_currencyParser, _cultureInfo),
                 ["ArmSwissBank"] = new ArmswissbankSiteParser(_currencyParser, _cultureInfo),
                 ["Artsakhbank"] = new ArtsakhbankRateParser(_currencyParser, _cultureInfo),
