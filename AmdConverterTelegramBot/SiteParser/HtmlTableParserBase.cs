@@ -3,7 +3,7 @@ using HtmlAgilityPack;
 
 namespace AmdConverterTelegramBot.SiteParser;
 
-abstract class HtmlTableParserBase : HtmlParserBase
+public abstract class HtmlTableParserBase : HtmlParserBase
 {
     protected HtmlTableParserBase(ICurrencyParser currencyParser, CultureInfo cultureInfo) : base(currencyParser, cultureInfo)
     {
