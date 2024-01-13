@@ -71,9 +71,6 @@ public class RateLoader
             var rateTask = RateFromSite(httpClient, (cash ? info.CashUrl : info.NonCashUrl) ?? info.Url, bank, cash);
             tasks.Add(rateTask);
         }
-
-        var mirTask = RateFromSite(httpClient, _rateSources.MirUrl, "MIR", cash);
-        tasks.Add(mirTask);
         
         var sasTask = RateFromSite(httpClient, _rateSources.SasUrl, "SAS", cash);
         tasks.Add(sasTask);
