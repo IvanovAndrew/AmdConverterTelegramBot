@@ -12,7 +12,7 @@ public static class MarkdownFormatter
         int[] columnWidth = CalculateColumnWidth(titles, rows);
         
         var builder = new StringBuilder();
-        builder.AppendLine($"|");
+        builder.AppendLine($"Converter");
         
         for (int i = 0; i < titles.Length; i++)
         {
