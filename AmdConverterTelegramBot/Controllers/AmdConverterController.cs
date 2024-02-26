@@ -12,9 +12,12 @@ namespace AmdConverterTelegramBot.Controllers;
 
 [ApiController]
 [Route(Route)]
+[ApiExplorerSettings(GroupName = "Telegram")]
 public class AmdConverterController : ControllerBase
 {
-    internal const string Route = "api/message/update"; 
+    internal const string Route = "api/message/update";
+    private const string MessageRoute = "message/update";
+    private const string WebhookRoute = "webhook";
     private readonly ILogger _logger;
     private readonly TelegramBot _bot;
     private readonly IRequestParser _requestParser;
@@ -97,7 +100,7 @@ public class AmdConverterController : ControllerBase
                 CultureInfo cultureInfo = GetCultureInfo(languageCode);
                 string replyText = FormatTable(sortedValues, conversion.From == money.Currency? conversion.To : conversion.From, conversionInfo.Count(), cultureInfo);
                 
-                await botClient.SendTextMessageAsync(chatId, TelegramEscaper.EscapeString($"{replyTitle}{Environment.NewLine}```{replyText}```"), ParseMode.MarkdownV2);
+                await botClient.SendTextMessageAsync(chatId, TelegramEscaper.EscapeString($"{replyTitle}```{replyText}```"), ParseMode.MarkdownV2);
             }
         }
         else if (_requestParser.TryParseMoneyAndCash(text, out money, out cash))
@@ -181,6 +184,37 @@ public class AmdConverterController : ControllerBase
         }
 
         return Ok();
+    }
+    
+    [HttpPost]
+    [Route(WebhookRoute)]
+    public async Task<IActionResult> SetWebHook(string url)
+    {
+        var bot = await _bot.GetBot();
+
+        var hookUrl = url;
+
+        var path = Route;
+        if (!hookUrl.EndsWith(path))
+        {
+            hookUrl = url.Last() == '/' ? url : url + "/";
+            hookUrl += path;
+        }
+            
+        await bot.SetWebhookAsync(hookUrl);
+
+        return Ok();
+    }
+        
+    [HttpGet]
+    [Route(WebhookRoute)]
+    public async Task<IActionResult> GetWebHook()
+    {
+        var bot = await _bot.GetBot();
+
+        var webHook = await bot.GetWebhookInfoAsync();
+
+        return Ok(webHook);
     }
 
     private string FormatTable(IOrderedEnumerable<ConversionInfo> exchanges, Currency currency, int rowNumber, CultureInfo cultureInfo)
