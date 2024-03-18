@@ -3,16 +3,14 @@ namespace AmdConverterTelegramBot;
 public class RateSources
 {
     public IReadOnlyDictionary<string, BankInfo> Banks { get; }
-    public string RateamCashUrl { get; }
-    public string RateamNonCashUrl { get; }
+    public string RateamUrl { get; }
     public string SasUrl { get; }
     public string MirUrl { get; }
 
     public RateSources(IConfiguration configuration)
     {
         Banks = configuration.GetSection("Banks").Get<BankInfo[]>().ToDictionary(b => b.Name.ToLowerInvariant());
-        RateamCashUrl = configuration["RateSources:RateamCashUrl"];
-        RateamNonCashUrl = configuration["RateSources:RateamNonCashUrl"];
+        RateamUrl = configuration["RateSources:RateamUrl"];
         SasUrl = configuration["RateSources:SasUrl"];
         MirUrl = configuration["RateSources:MirUrl"];
     }

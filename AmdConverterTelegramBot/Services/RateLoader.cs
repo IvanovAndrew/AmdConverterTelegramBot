@@ -1,5 +1,6 @@
 using AmdConverterTelegramBot.Entities;
 using AmdConverterTelegramBot.SiteParser;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace AmdConverterTelegramBot.Services;
 
@@ -9,19 +10,22 @@ public class RateLoader
     private readonly RateAmParser _rateAmParser;
     private readonly RateSources _rateSources;
     private readonly ILogger _logger;
+    private readonly IDistributedCache _cache;
 
-    public RateLoader(IBankParserFactory parserFactory, RateAmParser rateAmParser, RateSources rateSources, ILogger logger)
+    public RateLoader(IBankParserFactory parserFactory, RateAmParser rateAmParser, RateSources rateSources, ILogger logger, IDistributedCache cache)
     {
         _parserFactory = parserFactory ?? throw new ArgumentNullException(nameof(parserFactory));
         _rateAmParser = rateAmParser ?? throw new ArgumentNullException(nameof(rateAmParser));
         _rateSources = rateSources ?? throw new ArgumentNullException(nameof(rateSources));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _cache = cache;
     }
 
     public async Task<Result<List<ExchangePoint>>> LoadRates(bool cash)
     {
         Task<Result<List<ExchangePoint>>> rateAmTask, ratesFromBankSites;
-        using (HttpClient httpClient = new HttpClient(new HttpClientHandler{AllowAutoRedirect = true, MaxAutomaticRedirections = 2}))
+        
+        using (HttpClient httpClient = new HttpClient(new HttpClientHandler{AllowAutoRedirect = true}))
         {
             httpClient.DefaultRequestHeaders.Add("User-Agent", "Other");
             rateAmTask = RatesFromRateAm(httpClient, cash);
@@ -57,9 +61,20 @@ public class RateLoader
 
     private async Task<Result<List<ExchangePoint>>> RatesFromRateAm(HttpClient httpClient, bool cash)
     {
-        var rateAmHtml = await GetStringAsync(httpClient, cash? _rateSources.RateamCashUrl : _rateSources.RateamNonCashUrl);
-        
-        return rateAmHtml.Bind(html => _rateAmParser.Parse(html));
+        string url = _rateSources.RateamUrl;
+
+        //List<ExchangePoint> rateAmRates = await _cache.GetRecordAsync<List<ExchangePoint>>(url);
+        List<ExchangePoint> rateAmRates = null;
+
+        if (rateAmRates == null || rateAmRates.Count == 0)
+        {
+            var rateAmHtml = await GetStringAsync(httpClient, url);
+            rateAmRates = rateAmHtml.Bind(html => _rateAmParser.Parse(html, cash)).ValueOrDefault(new List<ExchangePoint>());
+
+            //await _cache.SetRecordAsync(url, rateAmRates);
+        }
+
+        return Result<List<ExchangePoint>>.Ok(rateAmRates);
     }
 
     private async Task<Result<List<ExchangePoint>>> RatesFromSites(HttpClient httpClient, bool cash)

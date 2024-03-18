@@ -1,130 +1,101 @@
 using System.Globalization;
 using AmdConverterTelegramBot.Entities;
 using HtmlAgilityPack;
+using Newtonsoft.Json;
 
 namespace AmdConverterTelegramBot.Services
 {
     public class RateAmParser
     {
-        private readonly IMoneyParser _moneyParser;
+        private readonly ICurrencyParser _currencyParser;
         private readonly CultureInfo _cultureInfo;
-        public RateAmParser(IMoneyParser moneyParser, CultureInfo cultureInfo)
+        public RateAmParser(ICurrencyParser currencyParser, CultureInfo cultureInfo)
         {
-            _moneyParser = moneyParser?? throw new ArgumentNullException(nameof(moneyParser));
+            _currencyParser = currencyParser?? throw new ArgumentNullException(nameof(currencyParser));
             _cultureInfo = cultureInfo?? throw new ArgumentNullException(nameof(cultureInfo));
         }
 
-        public Result<List<ExchangePoint>> Parse(string html)
+        public Result<List<ExchangePoint>> Parse(string html, bool cash)
         {
             var htmlDocument = new HtmlDocument();
             htmlDocument.LoadHtml(html);
 
-            return Parse(htmlDocument);
+            return Parse(htmlDocument, cash);
         }
 
-        public Result<List<ExchangePoint>> Parse(HtmlDocument webPage)
+        public Result<List<ExchangePoint>> Parse(HtmlDocument webPage, bool cash)
         {
             List<ExchangePoint> result = new();
 
-            var table = webPage.DocumentNode.SelectSingleNode("//table[@id='rb']");
+            var fullHtml = webPage.DocumentNode.OuterHtml;
 
-            int bankNameIndex = 0;
-            int dateIndex = 0;
-            Dictionary<Currency, Indices> currencyToIndices = new Dictionary<Currency, Indices>();
-            bool indicesInitialized = false;
+            string json = ExtractJson(fullHtml);
             
-            foreach (HtmlNode row in table.SelectNodes("tr"))
+            dynamic parsedJson = JsonConvert.DeserializeObject(json);
+
+
+            var codeToBank = new Dictionary<string, string>();
+
+            foreach (var organization in parsedJson["organizations"])
             {
-                var selectNodes = row.SelectNodes("th|td");
-                if (!indicesInitialized && row.GetAttributes().All(c => c.Name != "id"))
+                codeToBank[organization.Name] = organization.Value["name"].ToString();
+            }
+
+            var name = cash ? "CASH" : "CARDTRANSACTION";
+
+            foreach (var bankRates in parsedJson["organizationRates"])
+            {
+                var bank = new ExchangePoint()
                 {
-                    int innerIndex = 0;
-                    for (int i = 0; i < selectNodes.Count; i++)
-                    {
-                        var cell = selectNodes[i];
+                    Name = codeToBank[bankRates.Name],
+                    BaseCurrency = Currency.Amd,
+                };
 
-                        string innerText = "";
-                        if (cell.ChildNodes.Any(c => c.Name == "select"))
-                        {
-                            foreach (var childNode in cell.ChildNodes.First(c => c.Name == "select").ChildNodes)
-                            {
-                                if (childNode.GetAttributeValue("selected", "") == "selected")
-                                {
-                                    innerText = childNode.InnerText?? String.Empty;
-                                    break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            innerText = (cell.InnerText?? String.Empty).Trim();
-                        }
-                        
-                        if (new[] { "Bank" }.Contains(innerText))
-                        {
-                            bankNameIndex = innerIndex;
-                        }
-                        else if (new[] { "Date" }.Contains(innerText))
-                        {
-                            dateIndex = innerIndex;
-                        }
-                        else if (_moneyParser.TryParse(innerText, out var money))
-                        {
-                            currencyToIndices[money.Currency] = new Indices(innerIndex, innerIndex + 1);
-                        }
-
-                        int shift = selectNodes[i].GetAttributeValue("colspan", 1);
-
-                        innerIndex += shift;
-                    }
-
-                    indicesInitialized = true;
-                }
-
-                else if (row.GetAttributes().Any(c => c.Name == "id"))
+                foreach (var rate in bankRates.Value["rates"])
                 {
-                    var values = selectNodes.Select(n => n.InnerText.Trim()).ToArray();
-
-                    var bank = new ExchangePoint()
+                    if (_currencyParser.TryParse(rate.Name.ToString(), out Currency currency))
                     {
-                        Name = values[bankNameIndex],
-                        BaseCurrency = Currency.Amd,
-                    };
-
-                    foreach (var (currency, indices) in currencyToIndices)
-                    {
-                        var rate = ParseRate(values, indices.Sell);
-                        bank.AddRate(new Conversion {From = Currency.Amd, To = currency}, rate);
-                        
-                        rate = ParseRate(values, indices.Buy);
-                        bank.AddRate(new Conversion {From = currency, To = Currency.Amd}, rate);
+                        var jsonRates = rate.Value[name];
+                        if (jsonRates != null)
+                        {
+                            bank.AddRate(new Conversion {From = Currency.Amd, To = currency}, new Rate(decimal.Parse(jsonRates["sell"].ToString())));
+                            bank.AddRate(new Conversion {From = currency, To = Currency.Amd}, new Rate(decimal.Parse(jsonRates["buy"].ToString())));
+                        }
                     }
-
-                    result.Add(bank);
                 }
+                
+                result.Add(bank);
             }
 
             return Result<List<ExchangePoint>>.Ok(result);
         }
 
-        private Rate ParseRate(string[] values, int index)
+        private string ExtractJson(string fullHtml)
         {
-            if (string.IsNullOrEmpty(values[index]))
-                return Rate.Unknown;
-        
-            return new Rate(decimal.Parse(values[index], _cultureInfo));
-        }
-        
-        private struct Indices
-        {
-            internal readonly int Buy;
-            internal readonly int Sell;
+            var index = fullHtml.IndexOf("{\\\"lang\\\":\\\"en\\\",\\\"organizationRates\\\"");
 
-            internal Indices(int buy, int sell)
+            int length = 0;
+
+            int bracketsCounter = 0;
+            bool isStart = true;
+
+            var fullLength = fullHtml.Length;
+            for (int i = index; i < fullLength; i++)
             {
-                Buy = buy;
-                Sell = sell;
+                if (!isStart && bracketsCounter == 0)
+                {
+                    break;
+                }
+
+                length++;
+
+                if (fullHtml[i] == '{') bracketsCounter++;
+                else if (fullHtml[i] == '}') bracketsCounter--; 
+                
+                isStart = false;
             }
+
+            return fullHtml.Substring(index, length).Replace("\\", String.Empty);
         }
     }
 }

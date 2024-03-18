@@ -36,7 +36,7 @@ public class Startup
         services.AddSingleton<IBankParserFactory, BankParserFactory>(s => ActivatorUtilities.CreateInstance<BankParserFactory>(s, s.GetRequiredService<ICurrencyParser>(), cultureInfo));
         
         services.AddScoped<RateAmParser>(s =>
-            ActivatorUtilities.CreateInstance<RateAmParser>(s, s.GetRequiredService<IMoneyParser>(), cultureInfo));
+            ActivatorUtilities.CreateInstance<RateAmParser>(s, s.GetRequiredService<ICurrencyParser>(), cultureInfo));
         services.AddScoped<RateLoader>(s => ActivatorUtilities.CreateInstance<RateLoader>(s, 
             s.GetRequiredService<IBankParserFactory>(), 
             s.GetRequiredService<RateAmParser>(), 
