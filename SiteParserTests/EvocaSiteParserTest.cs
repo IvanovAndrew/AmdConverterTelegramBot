@@ -1,7 +1,7 @@
 using System.Globalization;
-using AmdConverterTelegramBot;
-using AmdConverterTelegramBot.SiteParser;
-using AmdConverterTelegramBot.SiteParser.Bank;
+using AmdConverterTelegramBot.Shared;
+using AmdConverterTelegramBot.Shared.SiteParser;
+using AmdConverterTelegramBot.Shared.SiteParser.Bank;
 
 namespace SiteParsersTests;
 
@@ -10,7 +10,7 @@ public class EvocaSiteParserTest : ArmenianBankSiteBaseTest
     protected override string BankName => "Evocabank";
     protected override string Site => "https://www.evoca.am/en";
 
-    protected override HtmlParserBase CreateParser(ICurrencyParser currencyParser, CultureInfo cultureInfo)
+    protected override HtmlParserBase CreateParser(CurrencyParser currencyParser, CultureInfo cultureInfo)
     {
         return new EvocabankSiteParser(currencyParser, cultureInfo);
     }

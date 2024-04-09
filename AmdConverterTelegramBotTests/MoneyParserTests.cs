@@ -1,6 +1,7 @@
 using System.Collections.Generic;
-using AmdConverterTelegramBot;
 using AmdConverterTelegramBot.Entities;
+using AmdConverterTelegramBot.Shared;
+using AmdConverterTelegramBot.Shared.Entities;
 using Xunit;
 
 namespace AmdConverterTelegramBotTests;
@@ -9,18 +10,7 @@ public class MoneyParserTests
 {
     private MoneyParser CreateMoneyParser()
     {
-        var currencyParser = new CurrencyParser(new Dictionary<string, string>
-        {
-            ["amd"] = "AMD",
-            ["драм"] = "AMD",
-            ["драмов"] = "AMD",
-            ["драма"] = "AMD",
-            ["армянских драм"] = "AMD",
-            ["армянских драмов"] = "AMD",
-            ["лари"] = "GEL",
-            ["грузинский лари"] = "GEL",
-            ["грузинских лари"] = "GEL"
-        });
+        var currencyParser = new CurrencyParser();
         return new MoneyParser(currencyParser);
     }
     

@@ -1,7 +1,4 @@
 using System.Globalization;
-using AmdConverterTelegramBot;
-using AmdConverterTelegramBot.SiteParser;
-using AmdConverterTelegramBot.SiteParser.Bank;
 
 namespace SiteParsersTests;
 

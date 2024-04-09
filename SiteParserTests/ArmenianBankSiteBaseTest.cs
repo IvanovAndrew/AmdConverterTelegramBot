@@ -1,8 +1,8 @@
 using System.Globalization;
-using System.Net.Http.Headers;
-using AmdConverterTelegramBot;
 using AmdConverterTelegramBot.Entities;
-using AmdConverterTelegramBot.SiteParser;
+using AmdConverterTelegramBot.Shared;
+using AmdConverterTelegramBot.Shared.Entities;
+using AmdConverterTelegramBot.Shared.SiteParser;
 using Xunit;
 
 namespace SiteParsersTests;
@@ -12,7 +12,7 @@ public abstract class ArmenianBankSiteBaseTest
     protected abstract string BankName { get; }
     protected abstract string Site { get; }
 
-    protected abstract RateParserBase CreateParser(ICurrencyParser currencyParser, CultureInfo cultureInfo);
+    protected abstract RateParserBase CreateParser(CurrencyParser currencyParser, CultureInfo cultureInfo);
     
     [Fact]
     public void ParseCashRates()
@@ -72,8 +72,7 @@ public abstract class ArmenianBankSiteBaseTest
         
     protected virtual ExchangePoint Execute(bool cash)
     {
-        var parser = CreateParser(new CurrencyParser(new Dictionary<string, string>() {["RUB"] = "RUR"}),
-            CultureInfo.InvariantCulture);
+        var parser = CreateParser(new CurrencyParser(), CultureInfo.InvariantCulture);
 
         var text = GetString(Site);
 

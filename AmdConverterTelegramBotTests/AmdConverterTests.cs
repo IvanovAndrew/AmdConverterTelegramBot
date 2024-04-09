@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
-using AmdConverterTelegramBot;
 using AmdConverterTelegramBot.Entities;
-using AmdConverterTelegramBot.Services;
+using AmdConverterTelegramBot.Shared.Entities;
 using Xunit;
 
 namespace AmdConverterTelegramBotTests;

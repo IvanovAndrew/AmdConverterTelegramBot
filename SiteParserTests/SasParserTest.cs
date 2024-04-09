@@ -1,7 +1,8 @@
 using System.Globalization;
-using AmdConverterTelegramBot;
 using AmdConverterTelegramBot.Entities;
-using AmdConverterTelegramBot.SiteParser;
+using AmdConverterTelegramBot.Shared;
+using AmdConverterTelegramBot.Shared.Entities;
+using AmdConverterTelegramBot.Shared.SiteParser;
 using HtmlAgilityPack;
 using Xunit;
 
@@ -68,8 +69,7 @@ namespace SiteParsersTests
         
         private ExchangePoint Execute()
         {
-            var parser = new SasSiteParser(new CurrencyParser(new Dictionary<string, string>()),
-                CultureInfo.InvariantCulture);
+            var parser = new SasSiteParser(new CurrencyParser(), CultureInfo.InvariantCulture);
 
             var htmlDoc = new HtmlWeb().Load("https://www.sas.am/food/en/");
 

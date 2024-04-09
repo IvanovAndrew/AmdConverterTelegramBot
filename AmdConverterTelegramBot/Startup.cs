@@ -1,7 +1,9 @@
 using System.Globalization;
 using AmdConverterTelegramBot.Entities;
-using AmdConverterTelegramBot.Services;
-using AmdConverterTelegramBot.SiteParser;
+using AmdConverterTelegramBot.Shared;
+using AmdConverterTelegramBot.Shared.Entities;
+using AmdConverterTelegramBot.Shared.Services;
+using AmdConverterTelegramBot.Shared.SiteParser;
 using Microsoft.OpenApi.Models;
 
 namespace AmdConverterTelegramBot;
@@ -28,22 +30,18 @@ public class Startup
         {
             c.SwaggerDoc("v1", new OpenApiInfo { Title = "Warrior", Version = "v1" });
         });
-        services.AddSingleton<TelegramBot>();
-        services.AddSingleton<RateSources>();
+        services.AddSingleton<Shared.Services.TelegramBot>();
+        services.AddSingleton<CurrencyParser>();
         
-        services.AddSingleton<ICurrencyParser, CurrencyParser>(s => ActivatorUtilities.CreateInstance<CurrencyParser>(s, _configuration.GetSection("CurrencySynonyms").GetChildren().ToDictionary(x => x.Key, x => x.Value)));
-        services.AddSingleton<IMoneyParser, MoneyParser>(s => ActivatorUtilities.CreateInstance<MoneyParser>(s, s.GetRequiredService<ICurrencyParser>()));
-        services.AddSingleton<IBankParserFactory, BankParserFactory>(s => ActivatorUtilities.CreateInstance<BankParserFactory>(s, s.GetRequiredService<ICurrencyParser>(), cultureInfo));
+        services.AddSingleton<IMoneyParser, MoneyParser>(s => ActivatorUtilities.CreateInstance<MoneyParser>(s, s.GetRequiredService<CurrencyParser>()));
+        services.AddSingleton<IBankParserFactory, BankParserFactory>(s => ActivatorUtilities.CreateInstance<BankParserFactory>(s, s.GetRequiredService<CurrencyParser>(), cultureInfo));
         
         services.AddScoped<RateAmParser>(s =>
-            ActivatorUtilities.CreateInstance<RateAmParser>(s, s.GetRequiredService<ICurrencyParser>(), cultureInfo));
+            ActivatorUtilities.CreateInstance<RateAmParser>(s, s.GetRequiredService<CurrencyParser>(), cultureInfo));
         services.AddScoped<RateLoader>(s => ActivatorUtilities.CreateInstance<RateLoader>(s, 
             s.GetRequiredService<IBankParserFactory>(), 
             s.GetRequiredService<RateAmParser>(), 
-            s.GetRequiredService<RateSources>(),
             s.GetService<ILoggerFactory>().CreateLogger<RateLoader>()));
-        
-        services.AddScoped<IRequestParser, RequestParser>(s => ActivatorUtilities.CreateInstance<RequestParser>(s, s.GetRequiredService<IMoneyParser>(), s.GetRequiredService<ICurrencyParser>(), _configuration.GetSection("Delimiters").Get<string[]>()));
         
         services.AddSingleton<Replies>();
     }

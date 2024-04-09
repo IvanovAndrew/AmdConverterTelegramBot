@@ -1,7 +1,8 @@
 using System.Globalization;
-using AmdConverterTelegramBot;
 using AmdConverterTelegramBot.Entities;
-using AmdConverterTelegramBot.Services;
+using AmdConverterTelegramBot.Shared;
+using AmdConverterTelegramBot.Shared.Entities;
+using AmdConverterTelegramBot.Shared.SiteParser;
 using HtmlAgilityPack;
 using Xunit;
 
@@ -19,7 +20,7 @@ public class RateAmParserTest
     public void ParseNonCashRates()
     {
         var parser = new RateAmParser(
-            new CurrencyParser(new Dictionary<string, string>()),
+            new CurrencyParser(),
             new CultureInfo("en-us"));
 
         // Act
@@ -33,7 +34,7 @@ public class RateAmParserTest
     public void ParseCashRates()
     {
         var parser = new RateAmParser(
-            new CurrencyParser(new Dictionary<string, string>()),
+            new CurrencyParser(),
             new CultureInfo("en-us"));
 
         // Act
@@ -47,7 +48,7 @@ public class RateAmParserTest
     public void BuyRateIsLowerThanSellRate(Currency currency)
     {
         var parser = new RateAmParser(
-            new CurrencyParser(new Dictionary<string, string>()),
+            new CurrencyParser(),
             new CultureInfo("en-us"));
 
         var rates = parser.Parse(GetHtmlDocument(), true);
