@@ -1,4 +1,3 @@
-using System.Globalization;
 using AmdConverterTelegramBot.Entities;
 using AmdConverterTelegramBot.Shared.Entities;
 using Sprache;
@@ -7,16 +6,25 @@ namespace AmdConverterTelegramBot.Shared;
 
 // grammar:= money | way money | way ((money to CURRENCY) | (CURRENCY to money)) 
 // way: CASH | CARD
-// money: \d+ CURRENCY
+// money: \d+.?\d+ CURRENCY
 // to: -> | TO
 
 public static class Grammar
 {
     private static readonly CurrencyParser _currencyParser = new();
 
+    private static readonly Parser<char> DecimalSeparator = Parse.Char(',').Or(Parse.Char('.'));
+    private static readonly Parser<string> Digits = Parse.Digit.AtLeastOnce().Text();
+    
+    private static readonly Parser<decimal> OptionalFraction = 
+        from separator in DecimalSeparator
+        from fraction in Digits
+        select decimal.Parse("0." + fraction);
+    
     private static readonly Parser<decimal> Amount =
         from integerParts in Parse.Number.DelimitedBy(Parse.Char(' '))
-        select decimal.Parse(string.Concat(integerParts));
+        from fraction in OptionalFraction.Optional()
+        select decimal.Parse(string.Concat(integerParts)) + fraction.GetOrElse(0);
 
     private static readonly Parser<Currency> CurrencyParser =
         Parse.Letter.AtLeastOnce().Text().Select(s => _currencyParser.Parse(s))
@@ -26,10 +34,16 @@ public static class Grammar
         );
 
     private static readonly Parser<Money> Money =
-        from amount in Amount
+        (from amount in Amount
         from space in Parse.WhiteSpace.Optional()
         from currency in CurrencyParser
-        select new Money {Amount = amount, Currency = currency};
+        select new Money {Amount = amount, Currency = currency})
+        .Or(
+            from currency in CurrencyParser
+            from space in Parse.WhiteSpace.Optional()
+            from amount in Amount
+            select new Money {Amount = amount, Currency = currency}
+            );
 
     private static readonly Parser<bool> Cash =
         Parse.IgnoreCase("cash").Return(true);
