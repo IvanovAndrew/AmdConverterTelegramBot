@@ -1,21 +1,32 @@
 using System.Globalization;
-using HtmlAgilityPack;
 
 namespace AmdConverterTelegramBot.Shared.SiteParser.Bank;
 
-class ArdshinbankSiteParser : HtmlTableParserBase
+class ArdshinbankSiteParser : JsonApiRateParser
 {
     public ArdshinbankSiteParser(CurrencyParser currencyParser, CultureInfo cultureInfo) : base(currencyParser, cultureInfo)
     {
     }
 
-    internal override string Url => "https://www.ardshinbank.am/en";
+    internal override string Url => "https://website-api.ardshinbank.am/currency";
     protected override string ExchangeName => "Ardshinbank";
 
+
+    protected override dynamic Rates(dynamic json, bool cash) => json["data"]["currencies"][cash? "cash" : "no_cash"];
     
-    protected override HtmlNode SelectTableNode(HtmlDocument htmlDocument, bool cash)
+
+    protected override string ExtractCurrency(dynamic rate)
     {
-        string cashId = cash ? "cash" : "no-cash";
-        return htmlDocument.DocumentNode.SelectSingleNode($@"//div[@id='{cashId}']/table");
+        return rate["type"];
+    }
+
+    protected override string ExtractBuyRate(dynamic rate, bool cash)
+    {
+        return rate["buy"];
+    }
+
+    protected override string ExtractSellRate(dynamic rate, bool cash)
+    {
+        return rate["sell"];
     }
 }
