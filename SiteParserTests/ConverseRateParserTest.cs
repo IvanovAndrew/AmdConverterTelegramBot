@@ -8,7 +8,6 @@ namespace SiteParsersTests;
 public class ConverseRateParserTest : ArmenianBankSiteBaseTest
 {
     protected override string BankName => "Converse bank";
-    protected override string Site => "https://www.conversebank.am/en/exchange-rate/";
     protected override HtmlParserBase CreateParser(CurrencyParser currencyParser, CultureInfo cultureInfo)
     {
         return new ConverseRateParser(currencyParser, cultureInfo);

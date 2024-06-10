@@ -8,7 +8,6 @@ namespace SiteParsersTests;
 public class EvocaSiteParserTest : ArmenianBankSiteBaseTest
 {
     protected override string BankName => "Evocabank";
-    protected override string Site => "https://www.evoca.am/en";
 
     protected override HtmlParserBase CreateParser(CurrencyParser currencyParser, CultureInfo cultureInfo)
     {

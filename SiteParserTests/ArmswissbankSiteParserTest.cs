@@ -8,7 +8,6 @@ namespace SiteParsersTests;
 public class ArmswissbankSiteParserTest : ArmenianBankSiteBaseTest
 {
     protected override string BankName => "Armswissbank";
-    protected override string Site => "https://www.armswissbank.am/include/ajax.php?asd";
 
     protected override RateParserBase CreateParser(CurrencyParser currencyParser, CultureInfo cultureInfo)
     {

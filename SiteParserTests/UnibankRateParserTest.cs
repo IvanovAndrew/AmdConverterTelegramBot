@@ -8,7 +8,6 @@ namespace SiteParsersTests;
 public class UnibankRateParserTest : ArmenianBankSiteBaseTest
 {
     protected override string BankName => "Unibank";
-    protected override string Site => "https://www.unibank.am/en/";
     protected override HtmlParserBase CreateParser(CurrencyParser currencyParser, CultureInfo cultureInfo)
     {
         return new UnibankRateParser(currencyParser, cultureInfo);

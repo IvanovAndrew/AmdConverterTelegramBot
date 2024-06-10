@@ -1,5 +1,4 @@
 using System.Globalization;
-using AmdConverterTelegramBot.Entities;
 using AmdConverterTelegramBot.Shared;
 using AmdConverterTelegramBot.Shared.Entities;
 using AmdConverterTelegramBot.Shared.SiteParser;
@@ -10,15 +9,14 @@ namespace SiteParsersTests;
 public abstract class ArmenianBankSiteBaseTest
 {
     protected abstract string BankName { get; }
-    protected abstract string Site { get; }
 
     protected abstract RateParserBase CreateParser(CurrencyParser currencyParser, CultureInfo cultureInfo);
     
     [Fact]
-    public void ParseCashRates()
+    public async Task ParseCashRates()
     {
         // Act
-        var exchangePoint = Execute(true);
+        var exchangePoint = await Execute(true);
             
         // Assert
         Assert.Equal(BankName, exchangePoint.Name);
@@ -32,10 +30,10 @@ public abstract class ArmenianBankSiteBaseTest
     }
     
     [Fact]
-    public void ParseNonCashRates()
+    public async Task ParseNonCashRates()
     {
         // Act
-        var exchangePoint = Execute(false);
+        var exchangePoint = await Execute(false);
             
         // Assert
         Assert.Equal(BankName, exchangePoint.Name);
@@ -49,10 +47,10 @@ public abstract class ArmenianBankSiteBaseTest
     }
 
     [Theory, MemberData(nameof(ForeignCurrency))]
-    public void BuyRateIsLowerThanSellRate(Currency currency)
+    public async Task BuyRateIsLowerThanSellRate(Currency currency)
     {
         // Act
-        var exchangePoint = Execute(true);
+        var exchangePoint = await Execute(true);
             
         // Assert
         var currencyToAmdRate =
@@ -65,19 +63,21 @@ public abstract class ArmenianBankSiteBaseTest
 
     public static IEnumerable<object[]> ForeignCurrency => new[]
     {
-        new [] {Currency.Eur}, 
+        new []{Currency.Eur}, 
         new []{Currency.Rur}, 
         new []{Currency.Usd},
     };
         
-    protected virtual ExchangePoint Execute(bool cash)
+    protected virtual async Task<ExchangePoint> Execute(bool cash)
     {
-        var parser = CreateParser(new CurrencyParser(), CultureInfo.InvariantCulture);
+        var bankRateLoader = new BankRateLoader(CreateParser(new CurrencyParser(), CultureInfo.InvariantCulture));
 
-        var text = GetString(Site);
-
-        var exchangePoint = parser.Parse(text, cash);
-        return exchangePoint.Value;
+        using (HttpClient httpClient = new HttpClient(new HttpClientHandler{AllowAutoRedirect = true, MaxAutomaticRedirections = 2}))
+        {
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "Other");
+            var exchangePoint = await bankRateLoader.GetExchangePointAsync(httpClient, cash);
+            return exchangePoint.Value;
+        }
     }
 
     protected virtual string GetString(string uri)
@@ -85,7 +85,7 @@ public abstract class ArmenianBankSiteBaseTest
         using (HttpClient httpClient = new HttpClient(new HttpClientHandler{AllowAutoRedirect = true, MaxAutomaticRedirections = 2}))
         {
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
-            httpClient.DefaultRequestHeaders.Add("User-Agent", "Other");
+            
             var response = httpClient.Send(request);
             response.EnsureSuccessStatusCode();
 

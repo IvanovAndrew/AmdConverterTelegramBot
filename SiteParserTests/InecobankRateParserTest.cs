@@ -8,7 +8,6 @@ namespace SiteParsersTests;
 public class InecobankRateParserTest : ArmenianBankSiteBaseTest
 {
     protected override string BankName => "Inecobank";
-    protected override string Site => "https://www.inecobank.am/api/rates";
 
     protected override RateParserBase CreateParser(CurrencyParser currencyParser, CultureInfo cultureInfo)
     {
