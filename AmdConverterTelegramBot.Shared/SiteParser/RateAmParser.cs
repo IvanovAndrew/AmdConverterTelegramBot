@@ -1,5 +1,4 @@
 using System.Globalization;
-using AmdConverterTelegramBot.Entities;
 using AmdConverterTelegramBot.Shared.Entities;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
@@ -22,7 +21,7 @@ namespace AmdConverterTelegramBot.Shared.SiteParser
             }
             catch(Exception e)
             {
-                return Result<List<ExchangePoint>>.Error($"Couldn't parse {_url}");
+                return Result<List<ExchangePoint>>.Error($"Couldn't parse {_url}: {e.Message}");
             }
         }
     }
@@ -30,9 +29,11 @@ namespace AmdConverterTelegramBot.Shared.SiteParser
     public class RateAmParser
     {
         private readonly CurrencyParser _currencyParser;
+        private readonly CultureInfo _cultureInfo;
         public RateAmParser(CurrencyParser currencyParser, CultureInfo cultureInfo)
         {
             _currencyParser = currencyParser?? throw new ArgumentNullException(nameof(currencyParser));
+            _cultureInfo = cultureInfo;
         }
         
         public Result<List<ExchangePoint>> Parse(string html, bool cash)
@@ -78,16 +79,14 @@ namespace AmdConverterTelegramBot.Shared.SiteParser
                         var jsonRates = rate.Value[name];
                         if (jsonRates != null)
                         {
-                            var sellRate = jsonRates["sell"].ToString();
-                            if (!string.IsNullOrEmpty(sellRate))
+                            if (Rate.TryParse(jsonRates["sell"].ToString(), _cultureInfo, out Rate sellRate))
                             {
-                                bank.AddRate(new Conversion {From = Currency.Amd, To = currency}, new Rate(decimal.Parse(sellRate)));
+                                bank.AddRate(new Conversion {From = Currency.Amd, To = currency}, sellRate);
                             }
 
-                            var buyRate = jsonRates["buy"].ToString();
-                            if (!string.IsNullOrEmpty(buyRate))
+                            if (Rate.TryParse(jsonRates["buy"].ToString(), _cultureInfo, out Rate buyRate))
                             {
-                                bank.AddRate(new Conversion {From = currency, To = Currency.Amd}, new Rate(decimal.Parse(buyRate)));
+                                bank.AddRate(new Conversion {From = currency, To = Currency.Amd}, buyRate);
                             }
                         }
                     }

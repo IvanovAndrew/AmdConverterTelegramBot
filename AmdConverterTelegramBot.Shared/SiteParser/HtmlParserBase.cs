@@ -1,4 +1,5 @@
 using System.Globalization;
+using AmdConverterTelegramBot.Entities;
 using AmdConverterTelegramBot.Shared.Entities;
 using HtmlAgilityPack;
 
@@ -43,12 +44,12 @@ public abstract class HtmlParserBase : SiteParserBase
             
             if (_currencyParser.TryParse(ExtractCurrency(nodes[CurrencyIndex()]), out var currency))
             {
-                if (TryParseRate(nodes[buyIndex].InnerText, out var buy))
+                if (Rate.TryParse(nodes[buyIndex].InnerText, out var buy))
                 {
                     exchangePoint.AddRate(new Conversion {From = currency!, To = Currency.Amd}, buy);
                 }
 
-                if (TryParseRate(nodes[sellIndex].InnerText, out var sell))
+                if (Rate.TryParse(nodes[sellIndex].InnerText, out var sell))
                 {
                     exchangePoint.AddRate(new Conversion {From = Currency.Amd, To = currency!}, sell);
                 }

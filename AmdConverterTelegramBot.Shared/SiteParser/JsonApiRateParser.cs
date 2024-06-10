@@ -24,12 +24,12 @@ public abstract class JsonApiRateParser : ApiRateParserBase
         {
             if (_currencyParser.TryParse(ExtractCurrency(rate), out Currency currency))
             {
-                if (TryParseRate(ExtractBuyRate(rate, cash), out Rate buy))
+                if (Rate.TryParse(ExtractBuyRate(rate, cash), out Rate buy))
                 {
                     exchangePoint.AddRate(new Conversion {From = currency!, To = Currency.Amd}, buy);
                 }
             
-                if (TryParseRate(ExtractSellRate(rate, cash), out Rate sell))
+                if (Rate.TryParse(ExtractSellRate(rate, cash), out Rate sell))
                 {
                     exchangePoint.AddRate(new Conversion {From = Currency.Amd, To = currency!}, sell);
                 }

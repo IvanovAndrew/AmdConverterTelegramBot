@@ -15,7 +15,7 @@ public class FastRateParser : JsonApiRateParser
 
     protected override string ExtractCurrency(dynamic rate) => rate.Id.ToString();
 
-    protected override string ExtractBuyRate(dynamic rate, bool cash) => rate.Buy.ToString(_cultureInfo);
+    protected override string ExtractBuyRate(dynamic rate, bool cash) => rate.Buy.ToString(CultureInfo);
 
-    protected override string ExtractSellRate(dynamic rate, bool cash) => rate.Sale.ToString(_cultureInfo);
+    protected override string ExtractSellRate(dynamic rate, bool cash) => rate.Sale.ToString(CultureInfo);
 }

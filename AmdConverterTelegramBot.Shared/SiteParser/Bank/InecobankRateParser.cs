@@ -12,10 +12,10 @@ public class InecobankRateParser : JsonApiRateParser
     protected override string ExtractCurrency(dynamic rate) => rate.code.ToString();
 
     protected override string ExtractBuyRate(dynamic rate, bool cash) =>
-        rate[cash ? "cash" : "cashless"].buy.ToString(_cultureInfo);
+        rate[cash ? "cash" : "cashless"].buy.ToString(CultureInfo);
 
     protected override string ExtractSellRate(dynamic rate, bool cash) =>
-        rate[cash ? "cash" : "cashless"].sell.ToString(_cultureInfo);
+        rate[cash ? "cash" : "cashless"].sell.ToString(CultureInfo);
 
     internal override string Url => "https://www.inecobank.am/api/rates/";
     protected override string ExchangeName => "Inecobank";

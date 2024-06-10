@@ -17,7 +17,7 @@ class ArtsakhbankRateParser : HtmlParserBase
     protected override HtmlNode SelectTableNode(HtmlDocument htmlDocument, bool cash)
     {
         string cashId = cash ? "tab_block exchange_1" : "tab_block exchange_2";
-        return htmlDocument.DocumentNode.SelectSingleNode($@"//div[@class='{cashId}']")?? htmlDocument.DocumentNode.SelectSingleNode($@"//div[@class='{cashId} selected']");
+        return htmlDocument.DocumentNode.SelectSingleNode($"//div[@class='{cashId}']")?? htmlDocument.DocumentNode.SelectSingleNode($@"//div[@class='{cashId} selected']");
     }
 
     protected override HtmlNodeCollection SelectTableRows(HtmlNode tableNode)

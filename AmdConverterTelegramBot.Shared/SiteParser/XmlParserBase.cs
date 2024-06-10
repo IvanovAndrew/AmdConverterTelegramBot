@@ -30,12 +30,12 @@ public abstract class XmlParserBase : ApiRateParserBase
             
             if (_currencyParser.TryParse(ExtractCurrency(rateNode), out var currency))
             {
-                if (TryParseRate(BuyRate(rateNode), out Rate buy))
+                if (Rate.TryParse(BuyRate(rateNode), CultureInfo, out Rate buy))
                 {
                     exchangePoint.AddRate(new Conversion {From = currency!, To = Currency.Amd}, buy);
                 }
                 
-                if (TryParseRate(SellRate(rateNode), out Rate sell))
+                if (Rate.TryParse(SellRate(rateNode), CultureInfo, out Rate sell))
                 {
                     exchangePoint.AddRate(new Conversion {From = Currency.Amd, To = currency!}, sell);
                 }
