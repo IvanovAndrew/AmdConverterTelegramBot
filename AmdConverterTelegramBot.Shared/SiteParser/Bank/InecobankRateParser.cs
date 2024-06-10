@@ -8,7 +8,7 @@ public class InecobankRateParser : JsonApiRateParser
     {
     }
     
-    protected override dynamic Rates(dynamic json) => json["items"];
+    protected override dynamic Rates(dynamic json, bool cash) => json["items"];
     protected override string ExtractCurrency(dynamic rate) => rate.code.ToString();
 
     protected override string ExtractBuyRate(dynamic rate, bool cash) =>

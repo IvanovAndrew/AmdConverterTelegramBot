@@ -10,7 +10,7 @@ public class MellatbankRateParser : JsonApiRateParser
 
     internal override string Url { get; }
     protected override string ExchangeName => "Mellat bank";
-    protected override dynamic Rates(dynamic json) => json["result"]["data"];
+    protected override dynamic Rates(dynamic json, bool cash) => json["result"]["data"];
 
     protected override string ExtractCurrency(dynamic rate) => rate.currency.ToString();
 

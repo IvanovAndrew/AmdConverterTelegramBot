@@ -18,9 +18,9 @@ public abstract class JsonApiRateParser : ApiRateParserBase
         
         var exchangePoint = CreateExchangePoint();
 
-        dynamic result = JsonConvert.DeserializeObject(json);
+        dynamic response = JsonConvert.DeserializeObject(json);
 
-        foreach (var rate in Rates(result))
+        foreach (var rate in Rates(response, cash))
         {
             if (_currencyParser.TryParse(ExtractCurrency(rate), out Currency currency))
             {
@@ -28,7 +28,7 @@ public abstract class JsonApiRateParser : ApiRateParserBase
                 {
                     exchangePoint.AddRate(new Conversion {From = currency!, To = Currency.Amd}, buy);
                 }
-                
+            
                 if (TryParseRate(ExtractSellRate(rate, cash), out Rate sell))
                 {
                     exchangePoint.AddRate(new Conversion {From = Currency.Amd, To = currency!}, sell);
@@ -39,7 +39,7 @@ public abstract class JsonApiRateParser : ApiRateParserBase
         return Result<ExchangePoint>.Ok(exchangePoint);
     }
 
-    protected abstract dynamic Rates(dynamic json);
+    protected abstract dynamic Rates(dynamic json, bool cash);
     protected abstract string ExtractCurrency(dynamic rate);
     protected abstract string ExtractBuyRate(dynamic rate, bool cash);
     protected abstract string ExtractSellRate(dynamic rate, bool cash);

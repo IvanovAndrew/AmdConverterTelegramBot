@@ -11,7 +11,7 @@ public class FastRateParser : JsonApiRateParser
     internal override string Url { get; }
     protected override string ExchangeName => "Fast Bank";
 
-    protected override dynamic Rates(dynamic json) => json["Rates"];
+    protected override dynamic Rates(dynamic json, bool cash) => json["Rates"];
 
     protected override string ExtractCurrency(dynamic rate) => rate.Id.ToString();
 

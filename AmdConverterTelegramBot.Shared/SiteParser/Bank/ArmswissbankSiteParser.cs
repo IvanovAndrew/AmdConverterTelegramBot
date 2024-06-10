@@ -10,7 +10,7 @@ public class ArmswissbankSiteParser : JsonApiRateParser
     {
     }
 
-    protected override dynamic Rates(dynamic json) => json["lmasbrate"];
+    protected override dynamic Rates(dynamic json, bool cash) => json["lmasbrate"];
 
     protected override string ExtractCurrency(dynamic rate) => rate.ISO.ToString();
 
