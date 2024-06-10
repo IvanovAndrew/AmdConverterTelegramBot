@@ -8,7 +8,7 @@ public class MellatbankRateParser : JsonApiRateParser
     {
     }
 
-    internal override string Url { get; }
+    internal override string Url => "https://api.mellatbank.am/api/v1/rate/list?";
     protected override string ExchangeName => "Mellat bank";
     protected override dynamic Rates(dynamic json, bool cash) => json["result"]["data"];
 
