@@ -60,7 +60,7 @@ namespace AmdConverterTelegramBot.Shared.SiteParser
 
             foreach (var organization in parsedJson["organizations"])
             {
-                codeToBank[organization.Name] = organization.Value["name"].ToString();
+                codeToBank[organization.Name] = organization.Value["name"].ToString().Trim();
             }
 
             var name = cash ? "CASH" : "CARDTRANSACTION";
@@ -80,8 +80,17 @@ namespace AmdConverterTelegramBot.Shared.SiteParser
                         var jsonRates = rate.Value[name];
                         if (jsonRates != null)
                         {
-                            bank.AddRate(new Conversion {From = Currency.Amd, To = currency}, new Rate(decimal.Parse(jsonRates["sell"].ToString())));
-                            bank.AddRate(new Conversion {From = currency, To = Currency.Amd}, new Rate(decimal.Parse(jsonRates["buy"].ToString())));
+                            var sellRate = jsonRates["sell"].ToString();
+                            if (!string.IsNullOrEmpty(sellRate))
+                            {
+                                bank.AddRate(new Conversion {From = Currency.Amd, To = currency}, new Rate(decimal.Parse(sellRate)));
+                            }
+
+                            var buyRate = jsonRates["buy"].ToString();
+                            if (!string.IsNullOrEmpty(buyRate))
+                            {
+                                bank.AddRate(new Conversion {From = currency, To = Currency.Amd}, new Rate(decimal.Parse(buyRate)));
+                            }
                         }
                     }
                 }
