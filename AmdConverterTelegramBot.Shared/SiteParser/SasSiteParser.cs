@@ -12,7 +12,7 @@ public class BankRateLoader
         _parser = parser;
     }
     
-    internal async Task<Result<ExchangePoint>> GetStringAsync(HttpClient httpClient, bool cash)
+    internal async Task<Result<ExchangePoint>> GetExchangePointAsync(HttpClient httpClient, bool cash)
     {
         try
         {

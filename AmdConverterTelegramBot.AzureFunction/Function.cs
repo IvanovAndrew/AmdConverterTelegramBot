@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Globalization;
 using System.Net;
 using AmdConverterTelegramBot.Entities;
@@ -48,7 +47,7 @@ public class Function
         }
         
         var bot = new TelegramBot(token);
-        var botClient = await bot.GetBot();
+        var botClient = bot.GetBot();
 
         long chatId = 0;
         int messageId = 0;

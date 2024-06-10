@@ -63,7 +63,7 @@ public class RateLoader
         var tasks = new List<Task<Result<ExchangePoint>>>();
         foreach (var bank in allBanks)
         {
-            var rateTask = bank.GetStringAsync(httpClient, cash);
+            var rateTask = bank.GetExchangePointAsync(httpClient, cash);
             tasks.Add(rateTask);
         }
         

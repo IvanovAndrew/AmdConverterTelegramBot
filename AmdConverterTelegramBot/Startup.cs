@@ -55,7 +55,7 @@ public class Startup
 
         app.UseSwagger();
         app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "AMD converter API"));
-        serviceProvider.GetRequiredService<TelegramBot>().GetBot().Wait();
+        serviceProvider.GetRequiredService<TelegramBot>().GetBot();
         
         app.UseRouting();
 

@@ -30,11 +30,9 @@ namespace AmdConverterTelegramBot.Shared.SiteParser
     public class RateAmParser
     {
         private readonly CurrencyParser _currencyParser;
-        private readonly CultureInfo _cultureInfo;
         public RateAmParser(CurrencyParser currencyParser, CultureInfo cultureInfo)
         {
             _currencyParser = currencyParser?? throw new ArgumentNullException(nameof(currencyParser));
-            _cultureInfo = cultureInfo?? throw new ArgumentNullException(nameof(cultureInfo));
         }
         
         public Result<List<ExchangePoint>> Parse(string html, bool cash)

@@ -21,20 +21,17 @@ public class AmdConverterController : ControllerBase
     private readonly TelegramBot _bot;
     private readonly RateLoader _rateLoader;
     
-    private readonly Replies _replies;
-    
-    public AmdConverterController(ILogger<AmdConverterController> logger, TelegramBot bot, RateLoader rateLoader, Replies replies)
+    public AmdConverterController(ILogger<AmdConverterController> logger, TelegramBot bot, RateLoader rateLoader)
     {
         _logger = logger;
         _bot = bot;
         _rateLoader = rateLoader;
-        _replies = replies;
     }
     
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] Update update)
     {
-        var botClient = await _bot.GetBot();
+        var botClient = _bot.GetBot();
 
         long chatId = 0;
         int messageId = 0;
@@ -84,7 +81,7 @@ public class AmdConverterController : ControllerBase
     [Route(WebhookRoute)]
     public async Task<IActionResult> SetWebHook(string url)
     {
-        var bot = await _bot.GetBot();
+        var bot = _bot.GetBot();
 
         var hookUrl = url;
 
@@ -104,7 +101,7 @@ public class AmdConverterController : ControllerBase
     [Route(WebhookRoute)]
     public async Task<IActionResult> GetWebHook()
     {
-        var bot = await _bot.GetBot();
+        var bot = _bot.GetBot();
 
         var webHook = await bot.GetWebhookInfoAsync();
 
