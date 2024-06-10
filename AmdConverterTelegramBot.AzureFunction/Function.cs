@@ -1,8 +1,6 @@
 using System.Globalization;
 using System.Net;
-using AmdConverterTelegramBot.Entities;
 using AmdConverterTelegramBot.Shared;
-using AmdConverterTelegramBot.Shared.Entities;
 using AmdConverterTelegramBot.Shared.Services;
 using AmdConverterTelegramBot.Shared.SiteParser;
 using Microsoft.Azure.Functions.Worker;
@@ -83,10 +81,16 @@ public class Function
         }
         else
         {
-            var request = Grammar.Request.Parse(text);
-            var engine = new Engine(rateLoader, botClient, GetCultureInfo(languageCode));
-
-            await engine.HandleRequest(request, chatId);
+            var parseResult = Grammar.Request.TryParse(text);
+            if (parseResult.WasSuccessful)
+            {
+                var engine = new Engine(rateLoader, botClient, GetCultureInfo(languageCode));
+                await engine.HandleRequest(parseResult.Value, chatId);
+            }
+            else
+            {
+                await botClient.SendTextMessageAsync(chatId, parseResult.Message);
+            }
         }
         
         return CreateResponse(req);
@@ -115,25 +119,5 @@ public class Function
         return cultures.TryGetValue(languageCode, out var cultureCode)
             ? new CultureInfo(cultureCode)
             : CultureInfo.InvariantCulture;
-    }
-    
-    private static string FormatTable(IOrderedEnumerable<ConversionInfo> exchanges, Currency currency, int rowNumber, CultureInfo cultureInfo)
-    {
-        string[,] rowValues = new string[rowNumber, 3];
-
-        int i = 0;
-        foreach (var conversionInfo in exchanges)
-        {
-            rowValues[i, 0] = conversionInfo.ExchangePoint.Name.Replace("Bank Armenia", "").Replace("Bank (Armenia)", "").Trim();
-            rowValues[i, 1] = conversionInfo.Rate != Rate.Unknown? conversionInfo.Rate.FXRate.ToString("0.##", cultureInfo) : "???";
-
-            var money = conversionInfo.FromMoney.Currency == currency
-                ? conversionInfo.FromMoney
-                : conversionInfo.ToMoney;
-            rowValues[i, 2] = conversionInfo.Rate != Rate.Unknown? money.Amount.ToString("0.##", cultureInfo) + $"{currency.Symbol}" : "???";
-            i++;
-        }
-
-        return MarkdownFormatter.FormatTable(new[] { "Bank", "Rate", exchanges.First().Conversion.ToString() }, rowValues);
     }
 }
