@@ -36,7 +36,8 @@ public class RateLoader
         var result = new Dictionary<string, ExchangePoint>(StringComparer.InvariantCultureIgnoreCase);
         foreach (var exchangePoint in rateAmRates.Union(bankRates))
         {
-            if (result.TryGetValue(exchangePoint.Name, out var ep))
+            string exchangePointName = exchangePoint.Name.Replace(" ", ""); 
+            if (result.TryGetValue(exchangePointName, out var ep))
             {
                 foreach (var (conversion, rate) in exchangePoint.Rates)
                 {
@@ -48,7 +49,7 @@ public class RateLoader
             }
             else
             {
-                result[exchangePoint.Name] = exchangePoint;
+                result[exchangePointName] = exchangePoint;
             }
         }
         
