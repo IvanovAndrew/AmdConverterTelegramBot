@@ -8,7 +8,7 @@ public class FastRateParser : JsonApiRateParser
     {
     }
 
-    internal override string Url { get; }
+    internal override string Url => "https://mobileapi.fcc.am/FCBank.Mobile.Api_V2/api/publicInfo/getRates?langID=1";
     protected override string ExchangeName => "Fast Bank";
 
     protected override dynamic Rates(dynamic json, bool cash) => json["Rates"];
