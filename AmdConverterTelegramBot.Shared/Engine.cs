@@ -61,15 +61,17 @@ public class Engine
                     new []
                     {
                         availableCurrencies
+                            .Where(c => c != Currency.Amd)
                             .Select(c =>
                                 InlineKeyboardButton.WithCallbackData(
-                                    text: $"{money.Currency.Name}->{c.Name}",
-                                    callbackData: $"{cashString} {moneyAsString}->{c.Name}")).ToArray(),
+                                    text: $"{money.Currency.Symbol} -> {c.Symbol}",
+                                    callbackData: $"{cashString} {moneyAsString} -> {c.Name}")).ToArray(),
                         availableCurrencies
+                            .Where(c => c != Currency.Amd)
                             .Select(c =>
                                 InlineKeyboardButton.WithCallbackData(
-                                    text: $"{c.Name}->{money.Currency.Name}",
-                                    callbackData: $"{cashString} {c.Name}->{moneyAsString}"))
+                                    text: $"{c.Symbol} -> {money.Currency.Symbol}",
+                                    callbackData: $"{cashString} {c.Name} -> {moneyAsString}"))
                     }
                 );
             }
@@ -78,8 +80,8 @@ public class Engine
                 inlineKeyboard = new InlineKeyboardMarkup(
                     new []
                     {
-                        InlineKeyboardButton.WithCallbackData(text:$"{money.Currency.Name} -> {Currency.Amd.Name}", callbackData: $"{cashString} {moneyAsString}->{Currency.Amd.Name}"), 
-                        InlineKeyboardButton.WithCallbackData(text:$"{Currency.Amd.Name} -> {money.Currency.Name}", callbackData: $"{cashString} {Currency.Amd.Name}->{moneyAsString}"), 
+                        InlineKeyboardButton.WithCallbackData(text:$"{money.Currency.Symbol} -> {Currency.Amd.Symbol}", callbackData: $"{cashString} {moneyAsString}->{Currency.Amd.Name}"), 
+                        InlineKeyboardButton.WithCallbackData(text:$"{Currency.Amd.Symbol} -> {money.Currency.Symbol}", callbackData: $"{cashString} {Currency.Amd.Name}->{moneyAsString}"), 
                     }
                 );
             }
