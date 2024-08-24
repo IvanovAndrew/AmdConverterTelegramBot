@@ -11,63 +11,23 @@ public abstract class ArmenianBankSiteBaseTest
     protected abstract string BankName { get; }
 
     protected abstract RateParserBase CreateParser(CurrencyParser currencyParser, CultureInfo cultureInfo);
-    
-    [Fact]
-    public async Task ParseCashRates()
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ParseEuroRate(bool cash)
     {
-        // Act
-        var exchangePoint = await Execute(true);
-            
-        // Assert
-        Assert.Equal(BankName, exchangePoint.Name);
-        Assert.Contains(new Conversion(){From = Currency.Amd, To = Currency.Usd}, exchangePoint.Rates.Keys);
-        Assert.Contains(new Conversion(){From = Currency.Amd, To = Currency.Eur}, exchangePoint.Rates.Keys);
-        Assert.Contains(new Conversion(){From = Currency.Amd, To = Currency.Rur}, exchangePoint.Rates.Keys);
-            
-        Assert.Contains(new Conversion(){From = Currency.Usd, To = Currency.Amd}, exchangePoint.Rates.Keys);
-        Assert.Contains(new Conversion(){From = Currency.Eur, To = Currency.Amd}, exchangePoint.Rates.Keys);
-        Assert.Contains(new Conversion(){From = Currency.Rur, To = Currency.Amd}, exchangePoint.Rates.Keys);
+        await RunTest(Currency.Eur, cash);
     }
     
-    [Fact]
-    public async Task ParseNonCashRates()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ParseUsdRate(bool cash)
     {
-        // Act
-        var exchangePoint = await Execute(false);
-            
-        // Assert
-        Assert.Equal(BankName, exchangePoint.Name);
-        Assert.Contains(new Conversion(){From = Currency.Amd, To = Currency.Usd}, exchangePoint.Rates.Keys);
-        Assert.Contains(new Conversion(){From = Currency.Amd, To = Currency.Eur}, exchangePoint.Rates.Keys);
-        Assert.Contains(new Conversion(){From = Currency.Amd, To = Currency.Rur}, exchangePoint.Rates.Keys);
-            
-        Assert.Contains(new Conversion(){From = Currency.Usd, To = Currency.Amd}, exchangePoint.Rates.Keys);
-        Assert.Contains(new Conversion(){From = Currency.Eur, To = Currency.Amd}, exchangePoint.Rates.Keys);
-        Assert.Contains(new Conversion(){From = Currency.Rur, To = Currency.Amd}, exchangePoint.Rates.Keys);
+        await RunTest(Currency.Usd, cash);
     }
-
-    [Theory, MemberData(nameof(ForeignCurrency))]
-    public async Task BuyRateIsLowerThanSellRate(Currency currency)
-    {
-        // Act
-        var exchangePoint = await Execute(true);
-            
-        // Assert
-        var currencyToAmdRate =
-            exchangePoint.Rates.First(c => c.Key == new Conversion { From = currency, To = Currency.Amd }).Value;
-        var amdToCurrencyRate =
-            exchangePoint.Rates.First(c => c.Key == new Conversion { From = Currency.Amd, To = currency }).Value;
-        
-        Assert.True(currencyToAmdRate.FXRate < amdToCurrencyRate.FXRate);
-    }
-
-    public static IEnumerable<object[]> ForeignCurrency => new[]
-    {
-        new []{Currency.Eur}, 
-        new []{Currency.Rur}, 
-        new []{Currency.Usd},
-    };
-        
+    
     protected virtual async Task<ExchangePoint> Execute(bool cash)
     {
         var bankRateLoader = new BankRateLoader(CreateParser(new CurrencyParser(), CultureInfo.InvariantCulture));
@@ -93,5 +53,24 @@ public abstract class ArmenianBankSiteBaseTest
             
             return reader.ReadToEnd();
         }
+    }
+
+    protected async Task RunTest(Currency currencyToCheck, bool cash)
+    {
+        // Act
+        var exchangePoint = await Execute(cash);
+            
+        // Assert
+        Assert.Equal(BankName, exchangePoint.Name);
+        
+        Assert.Contains(new Conversion(){From = Currency.Amd, To = currencyToCheck}, exchangePoint.Rates.Keys);
+        Assert.Contains(new Conversion(){From = currencyToCheck, To = Currency.Amd}, exchangePoint.Rates.Keys);
+        
+        var currencyToAmdRate =
+            exchangePoint.Rates.First(c => c.Key == new Conversion { From = Currency.Eur, To = Currency.Amd }).Value;
+        var amdToCurrencyRate =
+            exchangePoint.Rates.First(c => c.Key == new Conversion { From = Currency.Amd, To = Currency.Eur }).Value;
+        
+        Assert.True(currencyToAmdRate.FXRate < amdToCurrencyRate.FXRate);
     }
 }

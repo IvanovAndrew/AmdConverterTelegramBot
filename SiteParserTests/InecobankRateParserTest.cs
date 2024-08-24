@@ -1,7 +1,9 @@
 using System.Globalization;
 using AmdConverterTelegramBot.Shared;
+using AmdConverterTelegramBot.Shared.Entities;
 using AmdConverterTelegramBot.Shared.SiteParser;
 using AmdConverterTelegramBot.Shared.SiteParser.Bank;
+using Xunit;
 
 namespace SiteParsersTests;
 
@@ -13,5 +15,13 @@ public class InecobankRateParserTest : ArmenianBankSiteBaseTest
     {
         return new InecobankRateParser(new CurrencyParser(), CultureInfo.InvariantCulture);
 
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ParseRublesRate(bool cash)
+    {
+        await RunTest(Currency.Rur, cash);
     }
 }
